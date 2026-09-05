@@ -8,10 +8,8 @@ summary: >
   - STRONG FIT: mid-level or early SWE roles using React/Next/TypeScript,
     full-stack or frontend-heavy product engineering.
   - GOOD FIT: backend or platform roles where web/API skills transfer.
-  - PENALIZE: senior/staff/principal, manager, 5+ years required, or roles
-    focused on domains outside web (embedded, mobile-only, hardware, etc.).
-  - PENALIZE: roles requiring more than ~3 years unless the title is plain
-    "Software Engineer" or "Developer" without seniority language.
+  - PENALIZE: manager, or roles
+    focused on domains outside web (embedded, hardware, etc.).
 
 title_include:
   - software
@@ -21,12 +19,19 @@ title_include:
   - backend
   - full stack
   - fullstack
+  - React
+  - Next.js
+  - TypeScript
+  - Node.js
+  - JavaScript
+  - HTML
+  - CSS
+  - SQL
+  - NoSQL
 
 title_exclude:
-  - senior
   - staff
   - principal
-  - lead
   - manager
   - director
   - phd
@@ -37,7 +42,7 @@ locations_allow: []
 locations_block: []
 
 freshness_days: 21
-ping_threshold: 70     # discord pings only above this LLM score
+ping_threshold: 70 # discord pings only above this LLM score
 digest_threshold: 60
-high_score: 80         # "urgent" styling in the embed
+high_score: 80 # "urgent" styling in the embed
 high_fresh_hours: 2
