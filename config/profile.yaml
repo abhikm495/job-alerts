@@ -30,14 +30,9 @@ title_exclude:
   - manager
   - phd
 
-locations_allow:
-  - toronto
-  - canada
-  - remote
+locations_allow: []
 
-locations_block:
-  - emea
-  - apac
+locations_block: []
 
 freshness_days: 21
 ping_threshold: 78     # discord pings only above this LLM score
