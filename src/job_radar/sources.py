@@ -2,8 +2,12 @@ import asyncio
 
 import httpx
 
-from .adapters import (amazonjobs, ashby, googlecareers, greenhouse, lever, oracle,
-                       simplify, smartrecruiters, workable, workday)
+from .adapters import (amazonjobs, ashby, avature, bamboohr, beesite, breezy, deloitte,
+                       eightfold, googlecareers, greenhouse, higher_gs, icims, infosys,
+                       join_com, jobstream, lever, linkedin, mercedes, oracle, personio,
+                       phenom, publicissapient, recruitee, ripplehire, simplify,
+                       smartrecruiters, successfactors, talentbrew, tcs_ibegin, techmahindra,
+                       workable, workday, zwayam)
 from .adapters.base import TIMEOUT
 from .models import Company, Posting
 
@@ -16,28 +20,50 @@ ADAPTERS = {
     "simplify": simplify,
     "workable": workable,
     "oracle": oracle,
-    "googlecareers": googlecareers,   # proprietary-ATS giants: direct polling
+    "googlecareers": googlecareers,
     "amazonjobs": amazonjobs,
+    "personio": personio,
+    "recruitee": recruitee,
+    "eightfold": eightfold,
+    "ripplehire": ripplehire,
+    "zwayam": zwayam,
+    "bamboohr": bamboohr,
+    "join_com": join_com,
+    "breezy": breezy,
+    "phenom": phenom,
+    "successfactors": successfactors,
+    "icims": icims,
+    "avature": avature,
+    "talentbrew": talentbrew,
+    "linkedin": linkedin,
+    "techmahindra": techmahindra,
+    "deloitte": deloitte,
+    "mercedes": mercedes,
+    "beesite": beesite,
+    "higher_gs": higher_gs,
+    "jobstream": jobstream,
+    "infosys": infosys,
+    "tcs_ibegin": tcs_ibegin,
+    "publicissapient": publicissapient,
 }
 
 
 async def _fetch_one(client, sem, company, errors):
     adapter = ADAPTERS.get(company.ats)
     if adapter is None:
-        errors.append((company.slug, f"no adapter for ats={company.ats}"))
-        return []
+        errors.append((company.slug, repr(Exception(f"no adapter for ats={company.ats}"))))
+        return company, [], "no-adapter"
     async with sem:
         try:
-            return await adapter.fetch(client, company)
-        except Exception as e:  # one board failing never aborts the run
+            posts = await adapter.fetch(client, company)
+            status = "ok" if posts else "empty"
+            return company, posts, status
+        except Exception as e:
             errors.append((company.slug, repr(e)))
-            return []
+            return company, [], "error"
 
 
 async def fetch_all(companies, *, concurrency=45, client=None):
-    # 45 (up from 30) keeps the wall-time safe now that the watch-list includes ~1k slow,
-    # paginated Workday boards. Network-bound, so higher concurrency scales down the time;
-    # the ATS APIs tolerate it (a rare 429 just drops that board to the next poll).
     sem = asyncio.Semaphore(concurrency)
     errors: list[tuple[str, str]] = []
     owns = client is None
@@ -49,12 +75,12 @@ async def fetch_all(companies, *, concurrency=45, client=None):
     finally:
         if owns:
             await client.aclose()
-    postings = [p for sub in results for p in sub]
-    return postings, errors
+    board_status = [(c, status, len(posts)) for c, posts, status in results]
+    postings = [p for _c, posts, _s in results for p in posts]
+    return postings, errors, board_status
 
 
-# Adapters that expose enrich() to fetch a full description via a second call.
-ENRICHERS = {"workday", "smartrecruiters", "oracle"}
+ENRICHERS = {"workday", "smartrecruiters", "oracle", "join_com", "breezy"}
 
 
 async def enrich_postings(postings, cmap, *, concurrency=10, client=None):
@@ -73,9 +99,12 @@ async def enrich_postings(postings, cmap, *, concurrency=10, client=None):
         company = cmap.get((p.ats, p.company))
         if company is None:
             return p
+        adapter = ADAPTERS.get(p.ats)
+        if adapter is None or not hasattr(adapter, "enrich"):
+            return p
         async with sem:
             try:
-                return await ADAPTERS[p.ats].enrich(client, p, company)
+                return await adapter.enrich(client, p, company)
             except Exception:
                 return p
 

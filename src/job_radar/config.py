@@ -15,6 +15,10 @@ class Settings:
     role_id: str | None
     seen_path: str
     dry_run: bool
+    webhook_url_in: str | None = None
+    webhook_url_de: str | None = None
+    webhook_url_other: str | None = None
+    webhook_url_debug: str | None = None
     sheet_id: str | None = None    # Google Sheet to mirror matches into (None => off)
     creds_path: str | None = None  # service-account JSON for that Sheet
 
@@ -52,6 +56,7 @@ def load_companies(path: str) -> list[Company]:
         out.append(Company(
             slug=c["slug"], ats=str(c["ats"]).lower(), tier=str(c.get("tier", "target")).lower(),
             wd_host=c.get("wd_host"), wd_site=c.get("wd_site"),
+            token=c.get("token"), region=c.get("region"),
         ))
     return out
 
@@ -62,10 +67,19 @@ def _truthy(v: str) -> bool:
 
 def load_settings() -> Settings:
     webhook = os.environ.get("DISCORD_WEBHOOK_URL") or None
+    webhook_in = os.environ.get("DISCORD_WEBHOOK_URL_IN") or None
+    webhook_de = os.environ.get("DISCORD_WEBHOOK_URL_DE") or None
+    webhook_other = os.environ.get("DISCORD_WEBHOOK_URL_OTHER") or None
+    webhook_debug = os.environ.get("DISCORD_WEBHOOK_URL_DEBUG") or None
     key = os.environ.get("LLM_API_KEY") or None
-    dry = _truthy(os.environ.get("DRY_RUN", "")) or not webhook
+    any_webhook = webhook or webhook_in or webhook_de or webhook_other
+    dry = _truthy(os.environ.get("DRY_RUN", "")) or not any_webhook
     return Settings(
         webhook_url=webhook,
+        webhook_url_in=webhook_in,
+        webhook_url_de=webhook_de,
+        webhook_url_other=webhook_other,
+        webhook_url_debug=webhook_debug,
         llm_api_key=key,
         llm_model=os.environ.get("LLM_MODEL", ""),
         llm_provider=(os.environ.get("LLM_PROVIDER") or "gemini").lower(),

@@ -22,7 +22,7 @@ async def test_fetch_all_dispatches_and_tolerates_errors():
         return httpx.Response(404)
 
     client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
-    postings, errors = await sources.fetch_all(companies, client=client)
+    postings, errors, _board_status = await sources.fetch_all(companies, client=client)
     await client.aclose()
 
     assert len(postings) == 1                 # greenhouse succeeded

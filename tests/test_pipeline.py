@@ -22,6 +22,9 @@ class FakeNotifier:
     async def send_digest(self, items, now):
         self.digest = items
 
+    async def send_run_report(self, report):
+        pass
+
 
 def _postings():
     return [
@@ -54,7 +57,7 @@ def _prime_seen(config):
 
 async def test_pipeline_primes_silently_on_cold_start(tmp_path, monkeypatch):
     async def fake_fetch_all(companies, **kw):
-        return _postings(), []
+        return _postings(), [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
 
@@ -69,7 +72,7 @@ async def test_pipeline_primes_silently_on_cold_start(tmp_path, monkeypatch):
 
 async def test_pipeline_filters_scores_routes(tmp_path, monkeypatch):
     async def fake_fetch_all(companies, **kw):
-        return _postings(), []
+        return _postings(), [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
 
@@ -90,7 +93,7 @@ async def test_pipeline_filters_scores_routes(tmp_path, monkeypatch):
 
 async def test_force_prime_suppresses_pings_even_when_warm(tmp_path, monkeypatch):
     async def fake_fetch_all(companies, **kw):
-        return _postings(), []
+        return _postings(), [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
 
@@ -108,7 +111,7 @@ async def test_force_prime_suppresses_pings_even_when_warm(tmp_path, monkeypatch
 
 async def test_preview_is_read_only_and_ranks(tmp_path, monkeypatch):
     async def fake_fetch_all(companies, **kw):
-        return _postings(), []
+        return _postings(), [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     config = _config(tmp_path)
@@ -147,10 +150,13 @@ class RaisingNotifier:
     async def send_digest(self, *a):
         raise RuntimeError("simulated webhook 5xx")
 
+    async def send_run_report(self, *a):
+        pass
+
 
 async def test_send_failure_does_not_abort_run_and_state_is_persisted(tmp_path, monkeypatch):
     async def fake_fetch_all(companies, **kw):
-        return _postings(), []
+        return _postings(), [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     config = _config(tmp_path)
@@ -171,7 +177,7 @@ async def test_intra_run_uid_dedup_pings_once(tmp_path, monkeypatch):
     intern = _postings()[0]
 
     async def fake_fetch_all(companies, **kw):
-        return [intern, intern], []  # same uid twice in one poll (e.g. pagination overlap)
+        return [intern, intern], [], []  # same uid twice in one poll (e.g. pagination overlap)
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     config = _config(tmp_path)
@@ -189,7 +195,7 @@ async def test_same_title_different_reqs_pings_once(tmp_path, monkeypatch):
                 location="Remote", url="u2", posted_at=NOW, description="d")  # same role, 2nd req
 
     async def fake_fetch_all(companies, **kw):
-        return [a, b], []
+        return [a, b], [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     config = _config(tmp_path)
@@ -217,7 +223,7 @@ class FakeSink:
 
 async def test_pipeline_mirrors_matches_to_sheet(tmp_path, monkeypatch):
     async def fake_fetch_all(companies, **kw):
-        return _postings(), []
+        return _postings(), [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     config = _config(tmp_path)
@@ -233,7 +239,7 @@ async def test_pipeline_mirrors_matches_to_sheet(tmp_path, monkeypatch):
 
 async def test_sheet_failure_does_not_abort_run(tmp_path, monkeypatch):
     async def fake_fetch_all(companies, **kw):
-        return _postings(), []
+        return _postings(), [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     config = _config(tmp_path)
@@ -262,7 +268,7 @@ async def test_newly_added_board_is_primed_silently_not_flooded(tmp_path, monkey
                        location="Toronto", url="u2", posted_at=NOW, description="d")
 
     async def fake_fetch_all(companies, **kw):
-        return [intern_c, intern_d], []
+        return [intern_c, intern_d], [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     profile = Profile(summary="s", title_include=["intern"], title_exclude=["senior"],
@@ -283,7 +289,7 @@ async def test_newly_added_board_is_primed_silently_not_flooded(tmp_path, monkey
                         location="Toronto", url="u3", posted_at=NOW, description="d")
 
     async def fetch2(companies, **kw):
-        return [intern_c, intern_d, intern_d2], []
+        return [intern_c, intern_d, intern_d2], [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fetch2)
     notifier2 = FakeNotifier()
@@ -295,7 +301,7 @@ async def test_backfill_writes_to_sheet_without_touching_state(tmp_path, monkeyp
     import os
 
     async def fake_fetch_all(companies, **kw):
-        return _postings(), []
+        return _postings(), [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     config = _config(tmp_path)  # no _prime_seen: backfill ignores the seen-set entirely
@@ -310,7 +316,7 @@ async def test_backfill_writes_to_sheet_without_touching_state(tmp_path, monkeyp
 
 async def test_backfill_requires_a_sheet(tmp_path, monkeypatch):
     async def fake_fetch_all(companies, **kw):
-        return _postings(), []
+        return _postings(), [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     config = _config(tmp_path)  # settings.sheet_id is None -> no sink can be built
@@ -326,7 +332,7 @@ class ErrorProvider:
 
 async def test_error_score_neither_pings_nor_writes(tmp_path, monkeypatch):
     async def fake_fetch_all(companies, **kw):
-        return _postings(), []
+        return _postings(), [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     # Dream tier no longer forces a ping; an errored score (ok=False, value 0) should be
@@ -356,7 +362,7 @@ async def test_score_cap_defers_and_carries_over(tmp_path, monkeypatch):
                     posted_at=NOW, description="d") for i in range(5)]
 
     async def fake_fetch_all(companies, **kw):
-        return many, []
+        return many, [], []
 
     monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
     monkeypatch.setenv("SCORE_CAP", "2")

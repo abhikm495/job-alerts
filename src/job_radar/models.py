@@ -23,6 +23,8 @@ class Company:
     tier: str = "target"          # "dream" | "target"
     wd_host: str | None = None    # workday only (M2)
     wd_site: str | None = None    # workday only (M2)
+    token: str | None = None      # API identifier; defaults to slug when None
+    region: str | None = None     # optional routing hint: india | germany | other
 
 
 class Urgency(str, Enum):

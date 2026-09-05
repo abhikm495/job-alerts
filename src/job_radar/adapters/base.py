@@ -28,6 +28,33 @@ async def get_json(client, url, *, method="GET", json_body=None, retries=2):
     return resp.json()
 
 
+async def get_text(client, url, *, method="GET", data=None, headers=None, retries=2) -> str:
+    """GET/POST text/HTML with the same retry policy as get_json."""
+    hdrs = {"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml,*/*"}
+    if headers:
+        hdrs.update(headers)
+    resp = None
+    for attempt in range(retries + 1):
+        resp = await client.request(method, url, headers=hdrs, data=data, timeout=TIMEOUT)
+        if resp.status_code in RETRY_STATUS and attempt < retries:
+            retry_after = resp.headers.get("Retry-After")
+            wait = float(retry_after) if (retry_after and retry_after.isdigit()) else BACKOFF_BASE * (2 ** attempt)
+            await asyncio.sleep(min(wait, BACKOFF_MAX))
+            continue
+        break
+    resp.raise_for_status()
+    return resp.text
+
+
+async def get_xml(client, url, *, retries=2) -> str:
+    """GET XML with Accept header tuned for feeds/sitemaps."""
+    return await get_text(
+        client, url,
+        headers={"Accept": "application/xml,text/xml,*/*"},
+        retries=retries,
+    )
+
+
 def to_dt(value) -> datetime | None:
     if not value:
         return None

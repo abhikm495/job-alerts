@@ -98,7 +98,7 @@ async def _post_ping(posting, score, level, company):
 @tasks.loop(minutes=15)
 async def poll_loop():
     now = datetime.now(timezone.utc)
-    postings, errors = await fetch_all(COMPANIES)
+    postings, errors, _board_status = await fetch_all(COMPANIES)
     postings = _dedup_by_uid(postings)
     seen = SeenStore(SEEN_PATH).load()
     new = [p for p in postings if seen.is_new(p)]

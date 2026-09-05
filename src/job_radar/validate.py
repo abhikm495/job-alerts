@@ -67,6 +67,10 @@ def _to_dict(c):
         d["wd_host"] = c.wd_host
     if c.wd_site:
         d["wd_site"] = c.wd_site
+    if c.token:
+        d["token"] = c.token
+    if c.region:
+        d["region"] = c.region
     return d
 
 

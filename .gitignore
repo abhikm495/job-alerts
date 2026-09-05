@@ -9,6 +9,7 @@ google-creds.json
 .pytest_cache/
 scripts/mined_seed.csv
 _*.py
+!src/job_radar/adapters/_*.py
 
 # the live watch-list + scoring profile are private (job-radar-config repo);
 # CI fetches them at runtime, local runs use these untracked copies

@@ -14,7 +14,14 @@ from pathlib import Path
 
 import yaml
 
-VALID_ATS = {"greenhouse", "lever", "ashby", "workday", "smartrecruiters", "workable", "oracle"}
+VALID_ATS = {
+    "greenhouse", "lever", "ashby", "workday", "smartrecruiters", "workable", "oracle",
+    "personio", "recruitee", "eightfold", "ripplehire", "zwayam", "bamboohr",
+    "join_com", "breezy",
+    "phenom", "successfactors", "icims", "avature", "talentbrew", "linkedin",
+    "techmahindra", "deloitte", "mercedes", "beesite", "higher_gs", "jobstream",
+    "infosys", "tcs_ibegin", "publicissapient",
+}
 
 
 def parse_line(line: str) -> dict | None:
@@ -41,6 +48,10 @@ def parse_line(line: str) -> dict | None:
         if len(parts) < 4 or not parts[3]:
             return None  # oracle needs a non-empty site number (stored in wd_site)
         rec["wd_site"] = parts[3]
+    elif len(parts) > 3 and parts[3]:
+        rec["token"] = parts[3]
+        if len(parts) > 4 and parts[4]:
+            rec["region"] = parts[4].lower()
     return rec
 
 

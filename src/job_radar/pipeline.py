@@ -1,13 +1,16 @@
 import asyncio
 import os
 import re
+import time
 from dataclasses import replace
 from datetime import datetime, timezone
 
 from .dedup import SeenStore
-from .filters import passes_rules
+from .filters import passes_rules, rule_rejection
 from .models import Score, Urgency
-from .notify import ConsoleNotifier, DiscordNotifier
+from .notify import ConsoleNotifier, RegionalDiscordNotifier
+from .regions import classify_region
+from .report import RunReport
 from .scorer import (BedrockProvider, ClaudeProvider, FallbackProvider, GeminiProvider,
                      HeuristicProvider, heuristic_score)
 from .sources import enrich_postings, fetch_all
@@ -105,9 +108,11 @@ def build_provider(settings):
 
 
 def build_notifier(settings):
-    if settings.dry_run or not settings.webhook_url:
+    any_hook = (settings.webhook_url or settings.webhook_url_in or settings.webhook_url_de
+                or settings.webhook_url_other or settings.webhook_url_debug)
+    if settings.dry_run or not any_hook:
         return ConsoleNotifier()
-    return DiscordNotifier(settings.webhook_url, settings.role_id)
+    return RegionalDiscordNotifier(settings)
 
 
 def build_sheet_sink(settings):
@@ -133,7 +138,7 @@ async def preview(config, *, provider=None, now=None):
     provider = provider or build_provider(settings)
     cmap = _company_map(companies)
 
-    postings, errors = await fetch_all(companies)
+    postings, errors, board_status = await fetch_all(companies)
     survivors = [p for p in postings if passes_rules(p, profile, now)]
     to_score = survivors[:PREVIEW_CAP]
     to_score = await enrich_postings(to_score, cmap)
@@ -173,7 +178,7 @@ async def backfill(config, *, provider=None, sheet_sink=None, now=None,
                          "(set GOOGLE_SHEET_ID and GOOGLE_CREDENTIALS_PATH)")
     cmap = _company_map(companies)
 
-    postings, errors = await fetch_all(companies)
+    postings, errors, board_status = await fetch_all(companies)
     postings = _dedup_by_uid(postings)
     survivors = [p for p in postings if passes_rules(p, profile, now)]
     # Skip roles already in the Sheet BEFORE scoring, so a re-run only spends LLM calls on
@@ -213,6 +218,7 @@ async def backfill(config, *, provider=None, sheet_sink=None, now=None,
 
 
 async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None, force_prime=False):
+    t0 = time.monotonic()
     now = now or datetime.now(timezone.utc)
     profile, companies, settings = config.profile, config.companies, config.settings
     provider = provider or build_provider(settings)
@@ -221,9 +227,16 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
         sheet_sink = build_sheet_sink(settings)
     cmap = _company_map(companies)
 
+    report = RunReport(started_at=now, boards_total=len(companies), llm_provider=settings.llm_provider)
+
     seen = SeenStore(settings.seen_path).load()
-    postings, errors = await fetch_all(companies)
-    postings = _dedup_by_uid(postings)   # a job can repeat across paginated pages
+    postings, errors, board_status = await fetch_all(companies)
+    for company, status, _n in board_status:
+        report.record_board(company.ats, status)
+        if status == "error":
+            msg = next((m for s, m in errors if s == company.slug), "fetch failed")
+            report.unreachable.append((company.ats, company.slug, msg))
+    postings = _dedup_by_uid(postings)
     # For closed-role detection: every uid currently open, and the boards that fetched OK
     # this run (so a transient board error can't wrongly mark its roles Closed). Captured
     # here, before `errors` accrues later notify/sheet failures.
@@ -239,11 +252,20 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
         for p in postings:
             seen.mark(p, now)
         seen.save(now=now)
+        report.postings_fetched = len(postings)
+        report.new = len(new)
+        report.primed = len(postings)
+        report.duration_sec = time.monotonic() - t0
+        report.finalize_status()
         stats = {"boards": len(companies), "postings": len(postings), "errors": len(errors),
                  "new": len(new), "primed": len(postings), "survivors": 0, "pinged": 0, "digest": 0}
         print("job-radar PRIMED (first run, no notifications):", stats)
         if errors:
             print("errors (first 10):", errors[:10])
+        try:
+            await notifier.send_run_report(report)
+        except Exception as e:
+            errors.append(("report", repr(e)))
         return stats
 
     # Per-company silent prime: a board newly added to the watch-list would otherwise have
@@ -258,7 +280,13 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
         primed_new = len(new) - len(kept)
         new = kept
 
-    survivors = [p for p in new if passes_rules(p, profile, now)]
+    survivors = []
+    for p in new:
+        reason = rule_rejection(p, profile, now)
+        if reason:
+            report.filter_rejects[reason] = report.filter_rejects.get(reason, 0) + 1
+        else:
+            survivors.append(p)
     # Bound the expensive tail (enrich + LLM scoring) so a backlog spike — fall-wave
     # volume, newly added boards, or state loss after a killed run — can never blow the
     # run past its cron window. Survivors beyond the cap are DEFERRED: kept out of this
@@ -275,7 +303,10 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
 
     digest = []
     pinged = 0
-    pinged_keys = set()   # (company, title): ping a role once even if posted as several reqs
+    pinged_keys = set()
+    notif_counts = {"india": {"pinged": 0, "digest": 0},
+                    "germany": {"pinged": 0, "digest": 0},
+                    "other": {"pinged": 0, "digest": 0}}
     for p, score in scored:
         company = cmap.get((p.ats, p.company))
         # Sheet gets every genuinely-good match (>= SHEET_MIN_FIT), INDEPENDENT of whether
@@ -293,6 +324,8 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
             continue
         if level == Urgency.LOW:
             digest.append((p, score, company))
+            region = classify_region(p.location, hint=company.region if company else None)
+            notif_counts[region]["digest"] += 1
         else:
             key = (p.company, (p.title or "").strip().lower())
             if key in pinged_keys:   # same role as several reqs/locations -> ping once
@@ -301,8 +334,11 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
             try:
                 await notifier.send_one(p, score, level, company, now)
                 pinged += 1
-            except Exception as e:  # a webhook hiccup must not abort the run
+                region = classify_region(p.location, hint=company.region if company else None)
+                notif_counts[region]["pinged"] += 1
+            except Exception as e:
                 errors.append((p.company, f"notify: {e!r}"))
+                report.errors.append((p.ats, p.company, repr(e)))
 
     # One batched write (the Sheets API caps per-row writes at ~60/min). A Sheets hiccup
     # is recorded but can't abort the run.
@@ -348,7 +384,23 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
         "digest": len(digest), "tracked": tracked, "closed": closed,
         "score_errors": sum(1 for _, s in scored if not s.ok),
     }
+    report.postings_fetched = len(postings)
+    report.new = len(new)
+    report.primed = primed_new
+    report.survivors = len(survivors)
+    report.deferred = len(deferred_uids)
+    report.scored = len(scored)
+    report.score_errors = stats["score_errors"]
+    report.notifications = notif_counts
+    report.sheet_tracked = tracked
+    report.sheet_closed = closed
+    report.duration_sec = time.monotonic() - t0
+    report.finalize_status()
     print("job-radar run:", stats)
     if errors:
         print("errors (first 10):", errors[:10])
+    try:
+        await notifier.send_run_report(report)
+    except Exception as e:
+        errors.append(("report", repr(e)))
     return stats

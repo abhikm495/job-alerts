@@ -1,10 +1,6 @@
 name: job-radar
 on:
-  schedule:
-    - cron: "0 8 * * *"    # once-daily BACKUP; the real cadence comes from an external
-                            # cron (cron-job.org) hitting the workflow_dispatch API, which
-                            # isn't throttled like GH schedules and doesn't double-spend minutes
-  workflow_dispatch: {}        # manual + external-cron trigger
+  workflow_dispatch: {}        # manual + external cron-job.org hourly trigger
 
 permissions:
   contents: read
@@ -16,18 +12,16 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 20   # fall-wave runs are fatter; concurrency queue (cancel-in-progress false) serializes overlaps
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip                      # cache wheels (boto3 etc.) so frequent runs stay short
+          cache: pip
           cache-dependency-path: pyproject.toml
 
-      # Restore the seen-set from the most recent prior run. The key is unique per
-      # run so a fresh cache is always saved at job end; restore-keys grabs the latest.
       - name: Restore seen-set
         uses: actions/cache@v4
         with:
@@ -38,9 +32,6 @@ jobs:
 
       - run: pip install -e ".[sheet,bedrock]"
 
-      # Materialize the service-account key (if the secret is set) so the poll can
-      # mirror matches into the Google Sheet. No secret => the file is absent and the
-      # Sheet is silently skipped; Discord pings still work.
       - name: Write Google credentials
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
@@ -55,6 +46,10 @@ jobs:
       - name: Run radar
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL_IN: ${{ secrets.DISCORD_WEBHOOK_URL_IN }}
+          DISCORD_WEBHOOK_URL_DE: ${{ secrets.DISCORD_WEBHOOK_URL_DE }}
+          DISCORD_WEBHOOK_URL_OTHER: ${{ secrets.DISCORD_WEBHOOK_URL_OTHER }}
+          DISCORD_WEBHOOK_URL_DEBUG: ${{ secrets.DISCORD_WEBHOOK_URL_DEBUG }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           DISCORD_ROLE_ID: ${{ secrets.DISCORD_ROLE_ID }}
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
@@ -62,7 +57,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}   # boto3 region fallback (no ~/.aws in CI)
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
           SEEN_PATH: .state/seen.json
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
           GOOGLE_CREDENTIALS_PATH: google-creds.json

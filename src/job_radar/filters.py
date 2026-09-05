@@ -42,29 +42,30 @@ def visa_note(location: str) -> str:
 
 
 def passes_rules(posting: Posting, profile: Profile, now: datetime | None = None) -> bool:
+    return rule_rejection(posting, profile, now) is None
+
+
+def rule_rejection(posting: Posting, profile: Profile, now: datetime | None = None) -> str | None:
+    """Return a rejection reason key, or None if the posting passes all rules."""
     now = now or datetime.now(timezone.utc)
     title = posting.title.lower()
 
-    # Exclusions win outright.
     if any(x in title for x in profile.title_exclude):
-        return False
+        return "title_exclude"
 
-    # Must match at least one include keyword (if any are configured).
     if profile.title_include and not any(x in title for x in profile.title_include):
-        return False
+        return "title_include"
 
-    # Location: only evaluated when the posting has a location string.
     loc = (posting.location or "").lower().strip()
     if loc:
         if profile.locations_allow and not any(a in loc for a in profile.locations_allow):
-            return False
+            return "location_allow"
         if _location_blocked(loc, profile.locations_block):
-            return False
+            return "location_block"
 
-    # Freshness: only evaluated when posted_at is known.
     if posting.posted_at is not None:
         age_days = (now - posting.posted_at).total_seconds() / 86400
         if age_days > profile.freshness_days:
-            return False
+            return "freshness"
 
-    return True
+    return None
