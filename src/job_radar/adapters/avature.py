@@ -47,7 +47,11 @@ def _parse_page(html_text: str) -> list[dict]:
         title = _clean(title_raw)
         if not title:
             continue
-        parts = [_clean(m.group(1)) for m in (_CITY_RE, _STATE_RE, _COUNTRY_RE) if m.search(block)]
+        parts = []
+        for pat in (_CITY_RE, _STATE_RE, _COUNTRY_RE):
+            m = pat.search(block)
+            if m:
+                parts.append(_clean(m.group(1)))
         location = ", ".join(p for p in parts if p)
         jobs.append({"title": title, "location": location, "url": url.split("?")[0], "job_id": job_id})
     return jobs

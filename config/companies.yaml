@@ -902,7 +902,8 @@ companies:
 - slug: chargebee
   ats: linkedin
   tier: target
-  token: india
+  token: chargebee
+  region: india
 - slug: servicenow
   ats: smartrecruiters
   tier: target
@@ -1071,47 +1072,47 @@ companies:
 - slug: 4screen
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: accountable
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: advanced-store-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: airteam
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: aklamio
   ats: bamboohr
   tier: target
-  token: germany
+  region: germany
 - slug: allocnow
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: alteos
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: amperecloud
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: arcensus-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: ariadne
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: aroundhome
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: jobsearch
   ats: successfactors
   tier: target
@@ -1120,11 +1121,11 @@ companies:
 - slug: atheneum
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: audiencly
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: lgcgroup
   ats: smartrecruiters
   tier: target
@@ -1133,19 +1134,19 @@ companies:
 - slug: b2venture
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: banxware
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: baupal-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: grid
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: jobs
   ats: phenom
   tier: target
@@ -1154,99 +1155,99 @@ companies:
 - slug: berlinmetropolitanschool
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: bigpoint
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: bitcap
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: bliq
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: bonial
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: bonify
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: bragi
   ats: bamboohr
   tier: target
-  token: germany
+  region: germany
 - slug: getbyrd
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: cambrium
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: capmo
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: carbmee
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: casavi
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: celus
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: ces
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: checkmk-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: cinemo
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: civey-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: clark
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: codepan
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: xchange
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: convercus
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: cybervize
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: dance
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: deep-neuron-lab
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: deepl
   ats: ashby
   tier: target
@@ -1255,239 +1256,239 @@ companies:
 - slug: deepspin-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: dell
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: dentolo
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: dertouristik
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: dexter-health
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: dudechem
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: epilot
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: egroup
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: ecosia
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: enerhym
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: entityx
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: epages-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: erasys
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: estos
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: eurowings-digital
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: event-inc
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: evidentscientific
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: exmox-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: exomatter
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: provenexpert
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: expondo
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: faircado
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: fashioncloudgmbh
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: felmo
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: feniska
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: fine
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: firstclimate
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: formofoodsgmbh
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: freshcells
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: friendsurance
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: onfuel
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: gaia-group
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: gameduell
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: gauss-robotics
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: gnosis
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: greenbone-ag
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: gridx
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: gymondo-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: hashtag-you
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: geton
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: heyflow-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: holidu
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: holoplot
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: homeday
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: homify
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: humanoo
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: ilert
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: iluxi
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: indra-avitech
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: insidem2m
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: instagrid
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: join
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: juit
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: justplay
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: kipu-quantum
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: koro-handels-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: kugu
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: largespace
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: latana
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: leapsome
   ats: ashby
   tier: target
@@ -1496,231 +1497,231 @@ companies:
 - slug: lillydoo
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: limehome
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: linetweet
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: linus
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: livello
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: locoia
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: loudly
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: lumiform
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: magazino
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: makersitegmbh
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: nitrado
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: mavue
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: medability
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: meshle
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: mitai
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: condens
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: mrge-group-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: muchconsulting
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: mute-labs
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: mvst
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: mynaric
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: naxcon
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: ng-voice
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: ninox
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: noca-mobility
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: nonplusultra
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: noxonio
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: nuventura
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: oculai
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: offerista
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: onemedia-consulting
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: onu
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: osapiens1
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: oxolo
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: pair
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: pareto
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: patronus-group
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: personio
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: pixida
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: popcore
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: primal-state
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: project-a
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: q-perior
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: qdrant
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: quant-ip
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: qod
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: rahantech
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: rankingcoach
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: ratepay
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: reos
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: replug
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: retresco
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: riskident
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: rivada-space-networks-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: cuju
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: heyenzo
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: salesforce
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: scalablegmbh
   ats: smartrecruiters
   tier: target
@@ -1729,71 +1730,71 @@ companies:
 - slug: seqana
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: sharpist
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: shopapothekeeurope
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: shyftplan
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: sicoya
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: sidestream
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: silber-salon
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: sizekick
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: smartpatient
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: smava
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: softgames
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: softwaregini
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: solactive
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: spacegoats-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: spized
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: stabl-energy-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: suitepad
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: sunday-gmbh
   ats: ashby
   tier: target
@@ -1802,15 +1803,15 @@ companies:
 - slug: sunlabde
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: synapticon
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: twaice
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: uberall
   ats: ashby
   tier: target
@@ -1819,63 +1820,63 @@ companies:
 - slug: ucaneo
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: unu
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: vanilla-steel-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: vicoland
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: virtual-identity
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: dine-in-taste-gmbh
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: voltaira
   ats: recruitee
   tier: target
-  token: germany
+  region: germany
 - slug: we-love-x
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: westwing
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: workpath
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: wundermobility
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: xolo
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: xouxou
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: yfoodlabs
   ats: personio
   tier: target
-  token: germany
+  region: germany
 - slug: yoc
   ats: join_com
   tier: target
-  token: germany
+  region: germany
 - slug: zalando
   ats: smartrecruiters
   tier: target

@@ -38,7 +38,9 @@ def test_load_companies_lowercases_ats_and_tier(tmp_path):
 
 
 def test_load_settings_dry_run_when_no_webhook(monkeypatch):
-    monkeypatch.delenv("DISCORD_WEBHOOK_URL", raising=False)
+    for key in ("DISCORD_WEBHOOK_URL_IN", "DISCORD_WEBHOOK_URL_DE",
+                "DISCORD_WEBHOOK_URL_OTHER", "DISCORD_WEBHOOK_URL_DEBUG"):
+        monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv("DRY_RUN", raising=False)
     s = load_settings()
     assert s.dry_run is True
@@ -46,9 +48,9 @@ def test_load_settings_dry_run_when_no_webhook(monkeypatch):
     assert s.llm_model == ""            # "" => provider default, resolved in build_provider
 
 
-def test_load_settings_live_when_webhook_present(monkeypatch):
-    monkeypatch.setenv("DISCORD_WEBHOOK_URL", "http://hook")
+def test_load_settings_live_when_regional_webhook_present(monkeypatch):
+    monkeypatch.setenv("DISCORD_WEBHOOK_URL_IN", "http://hook-in")
     monkeypatch.delenv("DRY_RUN", raising=False)
     s = load_settings()
     assert s.dry_run is False
-    assert s.webhook_url == "http://hook"
+    assert s.webhook_url_in == "http://hook-in"

@@ -145,7 +145,9 @@ def convert(company: dict, section_id: str, section_region: str) -> str | None:
             return None
         return f"{oslug},{ats},{tier},{site}"
 
-    # slug-only or token in 4th column
+    # CSV columns: slug,ats,tier[,token][,region]
+    # When the API id is just the slug, leave token empty (,,region) so seed.py
+    # does not confuse region with token.
     needs_token = ats in {
         "eightfold", "ripplehire", "zwayam", "avature", "mercedes",
         "jobstream", "infosys", "tcs_ibegin", "techmahindra", "deloitte",
@@ -155,10 +157,10 @@ def convert(company: dict, section_id: str, section_region: str) -> str | None:
     if needs_token:
         line = f"{slug},{ats},{tier},{token}"
     else:
-        line = f"{slug},{ats},{tier}"
+        line = f"{slug},{ats},{tier},"
     if region:
         line = f"{line},{region}"
-    return line
+    return line.rstrip(",")
 
 
 def main() -> int:
@@ -170,7 +172,7 @@ def main() -> int:
     sections = data.get("sections") or []
     lines: list[str] = [
         "# Imported from job-automation/companies.yaml",
-        "# slug,ats,tier[,token][,region]",
+        "# slug,ats,tier[,token][,region]  (empty token: slug,ats,tier,,region)",
         "# workday: slug,workday,tier,wd_host,wd_site",
         "# oracle: slug,oracle,tier,site",
     ]

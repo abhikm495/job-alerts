@@ -39,7 +39,7 @@ def _config(tmp_path):
     profile = Profile(summary="s", title_include=["intern"], title_exclude=["senior"],
                       locations_allow=["toronto"], locations_block=[], freshness_days=21)
     companies = [Company(slug="c", ats="greenhouse", tier="target")]
-    settings = Settings(webhook_url=None, llm_api_key=None, llm_model="m", llm_provider="gemini",
+    settings = Settings(llm_api_key=None, llm_model="m", llm_provider="gemini",
                         role_id=None, seen_path=str(tmp_path / "seen.json"), dry_run=True)
     return Config(profile, companies, settings)
 
@@ -274,7 +274,7 @@ async def test_newly_added_board_is_primed_silently_not_flooded(tmp_path, monkey
     profile = Profile(summary="s", title_include=["intern"], title_exclude=["senior"],
                       locations_allow=["toronto"], locations_block=[], freshness_days=21)
     companies = [Company(slug="c", ats="greenhouse"), Company(slug="d", ats="greenhouse")]
-    settings = Settings(webhook_url=None, llm_api_key=None, llm_model="m", llm_provider="gemini",
+    settings = Settings(llm_api_key=None, llm_model="m", llm_provider="gemini",
                         role_id=None, seen_path=str(tmp_path / "seen.json"), dry_run=True)
     config = Config(profile, companies, settings)
     _prime_seen(config)  # marks company 'c' as known; 'd' is therefore newly added
@@ -340,7 +340,7 @@ async def test_error_score_neither_pings_nor_writes(tmp_path, monkeypatch):
     profile = Profile(summary="s", title_include=["intern"], title_exclude=["senior"],
                       locations_allow=["toronto"], locations_block=[], freshness_days=21)
     companies = [Company(slug="c", ats="greenhouse", tier="dream")]
-    settings = Settings(webhook_url=None, llm_api_key=None, llm_model="m", llm_provider="gemini",
+    settings = Settings(llm_api_key=None, llm_model="m", llm_provider="gemini",
                         role_id=None, seen_path=str(tmp_path / "seen.json"), dry_run=True)
     config = Config(profile, companies, settings)
     _prime_seen(config)
@@ -352,6 +352,24 @@ async def test_error_score_neither_pings_nor_writes(tmp_path, monkeypatch):
     assert sink.added == []             # error score never written
     assert stats["score_errors"] == 1   # the failure is surfaced in stats, not silent
     assert notifier.ones == []          # and a bad-fit/errored dream role no longer pings
+
+
+async def test_score_cap_zero_scores_all(tmp_path, monkeypatch):
+    many = [Posting(uid=f"greenhouse:c:all{i}", ats="greenhouse", company="c",
+                    title=f"Software Intern {i}", location="Toronto", url=f"https://x.test/{i}",
+                    posted_at=NOW, description="d") for i in range(5)]
+
+    async def fake_fetch_all(companies, **kw):
+        return many, [], []
+
+    monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
+    monkeypatch.setenv("SCORE_CAP", "0")
+
+    config = _config(tmp_path)
+    _prime_seen(config)
+
+    stats = await pipeline.run(config, provider=FakeProvider(value=90), notifier=FakeNotifier(), now=NOW)
+    assert stats["survivors"] == 5 and stats["deferred"] == 0
 
 
 async def test_score_cap_defers_and_carries_over(tmp_path, monkeypatch):

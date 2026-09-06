@@ -31,7 +31,9 @@ jobs:
 
       - name: Send reminders
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL_OTHER: ${{ secrets.DISCORD_WEBHOOK_URL_OTHER }}
+          DISCORD_WEBHOOK_URL_IN: ${{ secrets.DISCORD_WEBHOOK_URL_IN }}
+          DISCORD_WEBHOOK_URL_DE: ${{ secrets.DISCORD_WEBHOOK_URL_DE }}
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
           GOOGLE_CREDENTIALS_PATH: google-creds.json
         run: python -m job_radar.remind

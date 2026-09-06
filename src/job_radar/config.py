@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import yaml
 
@@ -8,7 +8,6 @@ from .models import Company, Profile
 
 @dataclass(frozen=True)
 class Settings:
-    webhook_url: str | None
     llm_api_key: str | None
     llm_model: str          # "" => provider default
     llm_provider: str       # "gemini" | "claude"
@@ -65,17 +64,23 @@ def _truthy(v: str) -> bool:
     return str(v).lower() in ("1", "true", "yes", "on")
 
 
+def any_discord_webhook(settings: Settings) -> bool:
+    return bool(settings.webhook_url_in or settings.webhook_url_de
+                or settings.webhook_url_other or settings.webhook_url_debug)
+
+
+def remind_webhook(settings: Settings) -> str | None:
+    """Webhook for non-regional messages (e.g. daily Sheet reminders)."""
+    return settings.webhook_url_other or settings.webhook_url_in or settings.webhook_url_de
+
+
 def load_settings() -> Settings:
-    webhook = os.environ.get("DISCORD_WEBHOOK_URL") or None
     webhook_in = os.environ.get("DISCORD_WEBHOOK_URL_IN") or None
     webhook_de = os.environ.get("DISCORD_WEBHOOK_URL_DE") or None
     webhook_other = os.environ.get("DISCORD_WEBHOOK_URL_OTHER") or None
     webhook_debug = os.environ.get("DISCORD_WEBHOOK_URL_DEBUG") or None
     key = os.environ.get("LLM_API_KEY") or None
-    any_webhook = webhook or webhook_in or webhook_de or webhook_other
-    dry = _truthy(os.environ.get("DRY_RUN", "")) or not any_webhook
-    return Settings(
-        webhook_url=webhook,
+    settings = Settings(
         webhook_url_in=webhook_in,
         webhook_url_de=webhook_de,
         webhook_url_other=webhook_other,
@@ -85,10 +90,15 @@ def load_settings() -> Settings:
         llm_provider=(os.environ.get("LLM_PROVIDER") or "gemini").lower(),
         role_id=os.environ.get("DISCORD_ROLE_ID") or None,
         seen_path=os.environ.get("SEEN_PATH", ".state/seen.json"),
-        dry_run=dry,
+        dry_run=_truthy(os.environ.get("DRY_RUN", "")),
         sheet_id=os.environ.get("GOOGLE_SHEET_ID") or None,
         creds_path=os.environ.get("GOOGLE_CREDENTIALS_PATH") or None,
     )
+    if settings.dry_run:
+        return settings
+    if not any_discord_webhook(settings):
+        return replace(settings, dry_run=True)
+    return settings
 
 
 def load_config(profile_path: str = "config/profile.yaml",

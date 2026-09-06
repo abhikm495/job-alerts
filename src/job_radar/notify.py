@@ -6,7 +6,7 @@ import httpx
 from .filters import visa_note
 from .models import Company, Posting, Score, Urgency
 from .regions import Region, classify_region
-from .report import RunReport
+from .report import RunReport, build_run_report_messages
 
 COLORS = {Urgency.HIGH: 0xE74C3C, Urgency.MEDIUM: 0xF1C40F, Urgency.LOW: 0x2ECC71}
 _TAG = re.compile(r"<[^>]+>")
@@ -102,15 +102,14 @@ class RegionalDiscordNotifier:
     """Routes job pings/digests to region-specific webhooks; posts RunReport to debug."""
 
     def __init__(self, settings, client=None):
-        fallback = settings.webhook_url
         self.role_id = settings.role_id
         self.client = client
         self._webhooks: dict[Region, str | None] = {
-            "india": settings.webhook_url_in or fallback,
-            "germany": settings.webhook_url_de or fallback,
-            "other": settings.webhook_url_other or fallback,
+            "india": settings.webhook_url_in,
+            "germany": settings.webhook_url_de,
+            "other": settings.webhook_url_other,
         }
-        self._debug = settings.webhook_url_debug or fallback
+        self._debug = settings.webhook_url_debug
         self._posters: dict[Region, _WebhookPoster] = {}
 
     def _poster(self, region: Region) -> _WebhookPoster | None:
@@ -169,45 +168,9 @@ class RegionalDiscordNotifier:
     async def send_run_report(self, report: RunReport) -> None:
         if not self._debug:
             return
-        lines = [
-            f"**Status:** {report.status} | **Duration:** {report.duration_sec:.1f}s",
-            f"**Boards:** {report.boards_total} total — {report.boards_ok} ok, "
-            f"{report.boards_empty} empty, {report.boards_error} error",
-            f"**Postings:** fetched {report.postings_fetched} | new {report.new} | "
-            f"primed {report.primed} | survivors {report.survivors} | deferred {report.deferred}",
-            f"**Scored:** {report.scored} ({report.score_errors} errors) | "
-            f"LLM: {report.llm_provider or 'n/a'} | heuristic fallbacks: {report.heuristic_fallbacks}",
-        ]
-        if report.filter_rejects:
-            fr = ", ".join(f"{k}={v}" for k, v in sorted(report.filter_rejects.items()))
-            lines.append(f"**Filter rejects:** {fr}")
-        if report.notifications:
-            for region, counts in sorted(report.notifications.items()):
-                lines.append(f"**Notify {region}:** pinged {counts.get('pinged', 0)}, "
-                             f"digest {counts.get('digest', 0)}")
-        if report.sheet_tracked or report.sheet_closed:
-            lines.append(f"**Sheet:** tracked {report.sheet_tracked}, closed {report.sheet_closed}")
-        if report.boards_by_ats:
-            ats_lines = []
-            for ats, counts in sorted(report.boards_by_ats.items()):
-                ats_lines.append(f"- {ats}: ok {counts.get('ok', 0)}, empty {counts.get('empty', 0)}, "
-                                 f"err {counts.get('error', 0)}")
-            lines.append("**Boards by ATS:**\n" + "\n".join(ats_lines))
-        if report.unreachable:
-            lines.append("**Unreachable boards:**")
-            for ats, slug, msg in report.unreachable:
-                lines.append(f"- `{ats}/{slug}`: {msg[:120]}")
-        if report.errors:
-            lines.append("**Errors:**")
-            for ats, slug, msg in report.errors:
-                lines.append(f"- `{ats}/{slug}`: {msg[:120]}")
-
-        body = "\n".join(lines)
-        chunks = [body[i:i + 3900] for i in range(0, len(body), 3900)] or [body]
         poster = _WebhookPoster(self._debug, self.role_id, self.client)
-        for i, chunk in enumerate(chunks):
-            title = "Run report" if i == 0 else f"Run report (cont. {i + 1})"
-            await poster._post({"embeds": [{"title": title, "description": chunk, "color": 0x3498DB}]})
+        for embed_group in build_run_report_messages(report):
+            await poster._post({"embeds": embed_group})
 
 
 class ConsoleNotifier:

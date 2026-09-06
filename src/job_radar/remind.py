@@ -1,12 +1,12 @@
 """Daily reminder pass for the cron+Sheet setup. Reads the tracker Sheet and pings the
 Discord webhook about deadlines coming up and strong matches still unapplied. Repeats
 daily by design: a reminder stops only once you mark the row Applied/Skip in the Sheet.
-Run: python -m job_radar.remind  (needs DISCORD_WEBHOOK_URL + GOOGLE_SHEET_ID + creds)."""
+Run: python -m job_radar.remind  (needs a Discord webhook + GOOGLE_SHEET_ID + creds)."""
 import asyncio
 from datetime import date
 
 from . import sheet, tracker
-from .config import load_settings
+from .config import load_settings, remind_webhook
 from .notify import ConsoleNotifier, DiscordNotifier
 
 
@@ -82,8 +82,8 @@ def main():
     if not (settings.sheet_id and settings.creds_path):
         raise SystemExit("remind: set GOOGLE_SHEET_ID and GOOGLE_CREDENTIALS_PATH")
     ws = sheet.connect(settings.creds_path, settings.sheet_id)
-    notifier = (DiscordNotifier(settings.webhook_url) if settings.webhook_url
-                else ConsoleNotifier())
+    url = remind_webhook(settings)
+    notifier = DiscordNotifier(url) if url else ConsoleNotifier()
     asyncio.run(remind(ws, notifier, sheet_url=_sheet_url(settings.sheet_id)))
 
 

@@ -43,6 +43,6 @@ locations_block: []
 
 freshness_days: 21
 ping_threshold: 70 # discord pings only above this LLM score
-digest_threshold: 60
+digest_threshold: 55
 high_score: 80 # "urgent" styling in the embed
 high_fresh_hours: 2

@@ -12,7 +12,6 @@ NOW = datetime(2026, 6, 1, 12, tzinfo=timezone.utc)
 
 def _settings(**kw):
     base = {
-        "webhook_url": "https://fallback",
         "llm_api_key": None, "llm_model": "", "llm_provider": "gemini",
         "role_id": None, "seen_path": ".state/seen.json", "dry_run": False,
         "webhook_url_in": "https://in",
@@ -47,9 +46,9 @@ async def test_send_run_report_posts_to_debug():
         return httpx.Response(204)
 
     report = RunReport(started_at=NOW, boards_total=10, postings_fetched=100)
-    report.record_board("greenhouse", "ok")
+    report.add_board("greenhouse", "stripe", "ok", 42, None)
     report.finalize_status()
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         await RegionalDiscordNotifier(_settings(), client=client).send_run_report(report)
-    assert "Run report" in sent[0]
-    assert "Boards:" in sent[0]
+    assert "Run Report" in sent[0]
+    assert "Board health" in sent[0] or "PIPELINE FUNNEL" in sent[0]

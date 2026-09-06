@@ -5,12 +5,13 @@ import time
 from dataclasses import replace
 from datetime import datetime, timezone
 
+from .config import any_discord_webhook
 from .dedup import SeenStore
 from .filters import passes_rules, rule_rejection
 from .models import Score, Urgency
 from .notify import ConsoleNotifier, RegionalDiscordNotifier
 from .regions import classify_region
-from .report import RunReport
+from .report import RunReport, ScoredJobSummary
 from .scorer import (BedrockProvider, ClaudeProvider, FallbackProvider, GeminiProvider,
                      HeuristicProvider, heuristic_score)
 from .sources import enrich_postings, fetch_all
@@ -26,6 +27,20 @@ SHEET_MIN_FIT = 60  # the cron only mirrors genuinely-good matches to the Sheet 
 # quota), so it's set wide to reach past the obvious top tier into the niche/startup roles
 # the heuristic pre-rank buries. Raise further via the BACKFILL_CAP env var.
 BACKFILL_CAP = int(os.environ.get("BACKFILL_CAP", "300"))
+
+
+def _read_score_cap() -> int:
+    return int(os.environ.get("SCORE_CAP", "0"))
+
+
+def _apply_score_cap(survivors, profile, score_cap: int):
+    """Return (kept, deferred_uids). score_cap <= 0 means score everything."""
+    if score_cap <= 0 or len(survivors) <= score_cap:
+        return survivors, set()
+    ranked = sorted(survivors, key=lambda p: heuristic_score(p, profile).value, reverse=True)
+    kept = ranked[:score_cap]
+    deferred = {p.uid for p in ranked[score_cap:]}
+    return kept, deferred
 
 
 def _company_map(companies):
@@ -108,9 +123,7 @@ def build_provider(settings):
 
 
 def build_notifier(settings):
-    any_hook = (settings.webhook_url or settings.webhook_url_in or settings.webhook_url_de
-                or settings.webhook_url_other or settings.webhook_url_debug)
-    if settings.dry_run or not any_hook:
+    if settings.dry_run or not any_discord_webhook(settings):
         return ConsoleNotifier()
     return RegionalDiscordNotifier(settings)
 
@@ -227,15 +240,23 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
         sheet_sink = build_sheet_sink(settings)
     cmap = _company_map(companies)
 
-    report = RunReport(started_at=now, boards_total=len(companies), llm_provider=settings.llm_provider)
+    report = RunReport(
+        started_at=now,
+        boards_total=len(companies),
+        llm_provider=settings.llm_provider,
+        ping_threshold=profile.ping_threshold,
+        digest_threshold=profile.digest_threshold,
+        high_score=profile.high_score,
+        score_cap=_read_score_cap(),
+    )
 
     seen = SeenStore(settings.seen_path).load()
     postings, errors, board_status = await fetch_all(companies)
-    for company, status, _n in board_status:
-        report.record_board(company.ats, status)
+    for company, status, job_count in board_status:
+        err_msg = next((m for s, m in errors if s == company.slug), None) if status == "error" else None
+        report.add_board(company.ats, company.slug, status, job_count, err_msg)
         if status == "error":
-            msg = next((m for s, m in errors if s == company.slug), "fetch failed")
-            report.unreachable.append((company.ats, company.slug, msg))
+            report.unreachable.append((company.ats, company.slug, err_msg or "fetch failed"))
     postings = _dedup_by_uid(postings)
     # For closed-role detection: every uid currently open, and the boards that fetched OK
     # this run (so a transient board error can't wrongly mark its roles Closed). Captured
@@ -292,14 +313,16 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
     # run past its cron window. Survivors beyond the cap are DEFERRED: kept out of this
     # run's seen-sweep so they come back as 'new' next run and get scored then, best
     # heuristic fit first. Deferrals are surfaced in stats, never silent.
-    score_cap = int(os.environ.get("SCORE_CAP", "150"))
-    deferred_uids: set = set()
-    if len(survivors) > score_cap:
-        survivors.sort(key=lambda p: heuristic_score(p, profile).value, reverse=True)
-        deferred_uids = {p.uid for p in survivors[score_cap:]}
-        survivors = survivors[:score_cap]
+    score_cap = _read_score_cap()
+    survivors, deferred_uids = _apply_score_cap(survivors, profile, score_cap)
     survivors = await enrich_postings(survivors, cmap)  # fill descriptions for the few that need it
     scored = await _score_all(provider, survivors, profile)
+    for p, score in scored:
+        report.scored_jobs.append(ScoredJobSummary(
+            title=p.title, company=p.company, ats=p.ats,
+            score=score.value, reason=(score.reason or "")[:120],
+            location=p.location or "", url=p.url or "", ok=score.ok,
+        ))
 
     digest = []
     pinged = 0
