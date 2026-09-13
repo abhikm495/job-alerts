@@ -61,6 +61,7 @@ jobs:
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
           GOOGLE_CREDENTIALS_PATH: google-creds.json
           SCORE_CAP: "0"
+          DEVJOBS_MAX_PAGES: "30"
         run: |
           set -o pipefail
           python -m job_radar | tee run.log

@@ -3,11 +3,11 @@ import asyncio
 import httpx
 
 from .adapters import (amazonjobs, ashby, avature, bamboohr, beesite, breezy, deloitte,
-                       eightfold, googlecareers, greenhouse, higher_gs, icims, infosys,
-                       join_com, jobstream, lever, linkedin, mercedes, oracle, personio,
-                       phenom, publicissapient, recruitee, ripplehire, simplify,
-                       smartrecruiters, successfactors, talentbrew, tcs_ibegin, techmahindra,
-                       workable, workday, zwayam)
+                       devjobs, eightfold, googlecareers, greenhouse, higher_gs, icims,
+                       infosys, join_com, jobstream, lever, linkedin, mercedes, oracle,
+                       personio, phenom, publicissapient, recruitee, ripplehire, simplify,
+                       smartrecruiters, successfactors, talentbrew, tcs_ibegin,
+                       techmahindra, workable, workday, zwayam)
 from .adapters.base import TIMEOUT
 from .models import Company, Posting
 
@@ -38,6 +38,7 @@ ADAPTERS = {
     "linkedin": linkedin,
     "techmahindra": techmahindra,
     "deloitte": deloitte,
+    "devjobs": devjobs,
     "mercedes": mercedes,
     "beesite": beesite,
     "higher_gs": higher_gs,
@@ -80,7 +81,7 @@ async def fetch_all(companies, *, concurrency=45, client=None):
     return postings, errors, board_status
 
 
-ENRICHERS = {"workday", "smartrecruiters", "oracle", "join_com", "breezy"}
+ENRICHERS = {"workday", "smartrecruiters", "oracle", "join_com", "breezy", "devjobs"}
 
 
 async def enrich_postings(postings, cmap, *, concurrency=10, client=None):
