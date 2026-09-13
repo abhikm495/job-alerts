@@ -12,12 +12,14 @@ BACKOFF_BASE = 0.5   # seconds; small so tests stay fast, real transient errors 
 BACKOFF_MAX = 8.0
 
 
-async def get_json(client, url, *, method="GET", json_body=None, retries=2):
+async def get_json(client, url, *, method="GET", json_body=None, headers=None, retries=2):
     """GET/POST JSON with capped exponential backoff on transient status codes."""
-    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    hdrs = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    if headers:
+        hdrs.update(headers)
     resp = None
     for attempt in range(retries + 1):
-        resp = await client.request(method, url, headers=headers, json=json_body, timeout=TIMEOUT)
+        resp = await client.request(method, url, headers=hdrs, json=json_body, timeout=TIMEOUT)
         if resp.status_code in RETRY_STATUS and attempt < retries:
             retry_after = resp.headers.get("Retry-After")
             wait = float(retry_after) if (retry_after and retry_after.isdigit()) else BACKOFF_BASE * (2 ** attempt)

@@ -1890,3 +1890,12 @@ companies:
   ats: devjobs
   tier: target
   region: germany
+- slug: bundesagentur-de
+  ats: bundesagentur
+  tier: target
+  token: software
+  region: germany
+- slug: arbeitnow-de
+  ats: arbeitnow
+  tier: target
+  region: germany

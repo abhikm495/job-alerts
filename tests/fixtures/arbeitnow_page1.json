@@ -1,0 +1,27 @@
+{
+  "data": [
+    {
+      "slug": "software-engineer-berlin-123",
+      "company_name": "Amperecloud GmbH",
+      "title": "Software Engineer",
+      "description": "<p>Build renewable energy software in Berlin.</p>",
+      "remote": false,
+      "url": "https://www.arbeitnow.com/jobs/companies/amperecloud/software-engineer-berlin-123",
+      "location": "Berlin",
+      "created_at": 1700000000
+    },
+    {
+      "slug": "dealer-account-manager-remote-456",
+      "company_name": "AIM",
+      "title": "Dealer Account Manager",
+      "description": "<p>Remote sales role.</p>",
+      "remote": true,
+      "url": "https://www.arbeitnow.com/jobs/companies/aim/dealer-account-manager-remote-456",
+      "location": "Seattle",
+      "created_at": 1700000100
+    }
+  ],
+  "links": {
+    "next": "https://www.arbeitnow.com/api/job-board-api?page=2"
+  }
+}

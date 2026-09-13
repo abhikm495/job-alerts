@@ -1,0 +1,39 @@
+{
+  "maxErgebnisse": 2,
+  "page": 1,
+  "size": 2,
+  "ergebnisliste": [
+    {
+      "stellenangebotsTitel": "Software Engineer (m/w/d)",
+      "firma": "easy software",
+      "referenznummer": "13644-308913-S",
+      "externeURL": "https://example.com/jobs/308913",
+      "veroeffentlichungszeitraum": {"von": "2026-09-03"},
+      "hauptberuf": "Anwendungsprogrammierer/in",
+      "stellenlokationen": [
+        {
+          "adresse": {
+            "plz": "45128",
+            "ort": "Essen, Ruhr",
+            "region": "NORDRHEIN_WESTFALEN",
+            "land": "DEUTSCHLAND"
+          }
+        }
+      ]
+    },
+    {
+      "stellenangebotsTitel": "Backend Developer",
+      "firma": "Acme GmbH",
+      "referenznummer": "10000-999999-S",
+      "veroeffentlichungszeitraum": {"von": "2026-09-09"},
+      "stellenlokationen": [
+        {
+          "adresse": {
+            "ort": "Berlin",
+            "land": "DEUTSCHLAND"
+          }
+        }
+      ]
+    }
+  ]
+}

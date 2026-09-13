@@ -2,12 +2,12 @@ import asyncio
 
 import httpx
 
-from .adapters import (amazonjobs, ashby, avature, bamboohr, beesite, breezy, deloitte,
-                       devjobs, eightfold, googlecareers, greenhouse, higher_gs, icims,
-                       infosys, join_com, jobstream, lever, linkedin, mercedes, oracle,
-                       personio, phenom, publicissapient, recruitee, ripplehire, simplify,
-                       smartrecruiters, successfactors, talentbrew, tcs_ibegin,
-                       techmahindra, workable, workday, zwayam)
+from .adapters import (amazonjobs, arbeitnow, ashby, avature, bamboohr, beesite, breezy,
+                       bundesagentur, deloitte, devjobs, eightfold, googlecareers, greenhouse,
+                       higher_gs, icims, infosys, join_com, jobstream, lever, linkedin,
+                       mercedes, oracle, personio, phenom, publicissapient, recruitee,
+                       ripplehire, simplify, smartrecruiters, successfactors, talentbrew,
+                       tcs_ibegin, techmahindra, workable, workday, zwayam)
 from .adapters.base import TIMEOUT
 from .models import Company, Posting
 
@@ -38,6 +38,8 @@ ADAPTERS = {
     "linkedin": linkedin,
     "techmahindra": techmahindra,
     "deloitte": deloitte,
+    "bundesagentur": bundesagentur,
+    "arbeitnow": arbeitnow,
     "devjobs": devjobs,
     "mercedes": mercedes,
     "beesite": beesite,
@@ -81,7 +83,10 @@ async def fetch_all(companies, *, concurrency=45, client=None):
     return postings, errors, board_status
 
 
-ENRICHERS = {"workday", "smartrecruiters", "oracle", "join_com", "breezy", "devjobs"}
+ENRICHERS = {
+    "workday", "smartrecruiters", "oracle", "join_com", "breezy", "devjobs",
+    "bundesagentur",
+}
 
 
 async def enrich_postings(postings, cmap, *, concurrency=10, client=None):

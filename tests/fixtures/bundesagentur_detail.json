@@ -1,0 +1,12 @@
+{
+  "stellenangebotsTitel": "Software Engineer (m/w/d)",
+  "stellenangebotsBeschreibung": "Build cloud-native solutions with Go and Kubernetes.",
+  "stellenlokationen": [
+    {
+      "adresse": {
+        "ort": "Essen, Ruhr",
+        "land": "DEUTSCHLAND"
+      }
+    }
+  ]
+}
