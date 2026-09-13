@@ -21,13 +21,19 @@ def test_bundesagentur_parse():
     assert "easy software" in posts[0].title
 
 
-def test_arbeitnow_parse_filters_us_location(monkeypatch):
+def test_arbeitnow_parse_keeps_all_by_default():
+    posts = arbeitnow.parse("arbeitnow-de", AN_PAGE["data"])
+    assert len(posts) == 2
+    assert posts[0].uid.endswith("software-engineer-berlin-123")
+    assert "Berlin" in posts[0].location
+    assert posts[1].location == "Seattle (Remote)"
+
+
+def test_arbeitnow_parse_optional_germany_filter(monkeypatch):
     monkeypatch.setattr(arbeitnow, "_germany_only", lambda: True)
     posts = arbeitnow.parse("arbeitnow-de", AN_PAGE["data"])
     assert len(posts) == 1
     assert posts[0].uid.endswith("software-engineer-berlin-123")
-    assert "Berlin" in posts[0].location
-    assert "Build renewable energy" in posts[0].description
 
 
 async def test_bundesagentur_fetch_paginates(monkeypatch):
@@ -75,11 +81,10 @@ async def test_bundesagentur_enrich():
 
 async def test_arbeitnow_fetch_stops_without_next_link(monkeypatch):
     monkeypatch.setattr(arbeitnow, "_env_int", lambda name, default: 5)
-    monkeypatch.setattr(arbeitnow, "_germany_only", lambda: True)
 
     def handler(request):
         return httpx.Response(200, json=AN_PAGE)
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         posts = await arbeitnow.fetch(client, Company(slug="arbeitnow-de", ats="arbeitnow"))
-    assert len(posts) == 1
+    assert len(posts) == 2

@@ -34,7 +34,8 @@ def _env_int(name: str, default: int) -> int:
 
 
 def _germany_only() -> bool:
-    return os.environ.get("ARBEITNOW_GERMANY_ONLY", "true").strip().lower() in ("1", "true", "yes")
+    """Optional adapter-side location filter. Default off — use profile locations_block instead."""
+    return os.environ.get("ARBEITNOW_GERMANY_ONLY", "false").strip().lower() in ("1", "true", "yes")
 
 
 def _keep_location(location: str, remote: bool) -> bool:

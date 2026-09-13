@@ -59,3 +59,12 @@ def test_location_block_is_token_aware():
     assert not _location_blocked("london, ontario", ["india", "germany"]) # London ON safe
     assert _location_blocked("london, united kingdom", ["united kingdom"])  # phrase substring
     assert not _location_blocked("remote", [])                            # empty list = no-op
+
+
+def test_profile_blocks_us_keeps_germany():
+    from job_radar.config import load_profile
+    from pathlib import Path
+    profile = load_profile(str(Path(__file__).resolve().parents[1] / "config" / "profile.yaml"))
+    assert passes_rules(_p("Software Engineer", location="Berlin, Germany"), profile, NOW)
+    assert not passes_rules(_p("Software Engineer", location="Seattle, WA"), profile, NOW)
+    assert not passes_rules(_p("Software Engineer", location="London, United Kingdom"), profile, NOW)

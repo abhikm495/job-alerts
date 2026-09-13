@@ -65,7 +65,7 @@ jobs:
           BA_MAX_PAGES: "20"
           BA_VEROEFFENTLICHTSEIT: "14"
           ARBEITNOW_MAX_PAGES: "10"
-          ARBEITNOW_GERMANY_ONLY: "true"
+          ARBEITNOW_GERMANY_ONLY: "false"
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
           ADZUNA_MAX_PAGES: "10"
