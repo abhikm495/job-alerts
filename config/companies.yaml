@@ -1899,3 +1899,8 @@ companies:
   ats: arbeitnow
   tier: target
   region: germany
+- slug: adzuna-de
+  ats: adzuna
+  tier: target
+  token: software
+  region: germany

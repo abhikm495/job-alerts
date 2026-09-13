@@ -1,0 +1,42 @@
+{
+  "count": 2,
+  "__CLASS__": "Adzuna::API::Response::JobSearchResults",
+  "results": [
+    {
+      "id": "5878501683",
+      "title": "Software Engineer (w/m/d)",
+      "created": "2026-09-10T16:06:20Z",
+      "redirect_url": "https://www.adzuna.de/land/ad/5878501683",
+      "description": "<p>Build cloud-native services with <strong>TypeScript</strong>.</p>",
+      "company": {
+        "display_name": "Ärzte ohne Grenzen e.V.",
+        "__CLASS__": "Adzuna::API::Response::Company"
+      },
+      "location": {
+        "display_name": "Wedding, Berlin",
+        "area": ["Deutschland", "Berlin", "Wedding"],
+        "__CLASS__": "Adzuna::API::Response::Location"
+      },
+      "category": {
+        "label": "IT-Stellen",
+        "tag": "it-jobs",
+        "__CLASS__": "Adzuna::API::Response::Category"
+      }
+    },
+    {
+      "id": "5879820391",
+      "title": "Fullstack Software Engineer Tech & AI (m/w/d)",
+      "created": "2026-09-11T16:47:24Z",
+      "redirect_url": "https://www.adzuna.de/land/ad/5879820391",
+      "description": "Modern web applications with React.",
+      "company": {
+        "display_name": "GSK Stockmann",
+        "__CLASS__": "Adzuna::API::Response::Company"
+      },
+      "location": {
+        "display_name": "Mitte, Berlin",
+        "__CLASS__": "Adzuna::API::Response::Location"
+      }
+    }
+  ]
+}

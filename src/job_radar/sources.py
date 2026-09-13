@@ -2,8 +2,9 @@ import asyncio
 
 import httpx
 
-from .adapters import (amazonjobs, arbeitnow, ashby, avature, bamboohr, beesite, breezy,
-                       bundesagentur, deloitte, devjobs, eightfold, googlecareers, greenhouse,
+from .adapters import (adzuna, amazonjobs, arbeitnow, ashby, avature, bamboohr, beesite,
+                       breezy, bundesagentur, deloitte, devjobs, eightfold, googlecareers,
+                       greenhouse,
                        higher_gs, icims, infosys, join_com, jobstream, lever, linkedin,
                        mercedes, oracle, personio, phenom, publicissapient, recruitee,
                        ripplehire, simplify, smartrecruiters, successfactors, talentbrew,
@@ -40,6 +41,7 @@ ADAPTERS = {
     "deloitte": deloitte,
     "bundesagentur": bundesagentur,
     "arbeitnow": arbeitnow,
+    "adzuna": adzuna,
     "devjobs": devjobs,
     "mercedes": mercedes,
     "beesite": beesite,
