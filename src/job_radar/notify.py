@@ -5,7 +5,7 @@ import httpx
 
 from .filters import visa_note
 from .models import Company, Posting, Score, Urgency
-from .regions import Region, classify_region
+from .regions import classify_region, webhook_region
 from .report import RunReport, build_run_report_messages
 
 COLORS = {Urgency.HIGH: 0xE74C3C, Urgency.MEDIUM: 0xF1C40F, Urgency.LOW: 0x2ECC71}
@@ -72,6 +72,22 @@ class _WebhookPoster:
                 await client.aclose()
 
 
+def _build_webhook_map(settings) -> dict[str, str]:
+    """Merge legacy IN/DE/OTHER/DEBUG fields with DISCORD_WEBHOOK_URL_* extras."""
+    out: dict[str, str] = dict(settings.region_webhooks or {})
+    if settings.webhook_url_in:
+        out.setdefault("in", settings.webhook_url_in)
+        out.setdefault("india", settings.webhook_url_in)
+    if settings.webhook_url_de:
+        out.setdefault("de", settings.webhook_url_de)
+        out.setdefault("germany", settings.webhook_url_de)
+    if settings.webhook_url_other:
+        out.setdefault("other", settings.webhook_url_other)
+    if settings.webhook_url_debug:
+        out.setdefault("debug", settings.webhook_url_debug)
+    return out
+
+
 class DiscordNotifier(_WebhookPoster):
     async def send_one(self, posting, score, urgency, company, now) -> None:
         content = f"<@&{self.role_id}>" if (urgency == Urgency.HIGH and self.role_id) else None
@@ -104,23 +120,19 @@ class RegionalDiscordNotifier:
     def __init__(self, settings, client=None):
         self.role_id = settings.role_id
         self.client = client
-        self._webhooks: dict[Region, str | None] = {
-            "india": settings.webhook_url_in,
-            "germany": settings.webhook_url_de,
-            "other": settings.webhook_url_other,
-        }
-        self._debug = settings.webhook_url_debug
-        self._posters: dict[Region, _WebhookPoster] = {}
+        self._webhooks = _build_webhook_map(settings)
+        self._posters: dict[str, _WebhookPoster] = {}
 
-    def _poster(self, region: Region) -> _WebhookPoster | None:
-        url = self._webhooks.get(region)
+    def _poster(self, region: str) -> _WebhookPoster | None:
+        key = webhook_region(region)
+        url = self._webhooks.get(key) or self._webhooks.get(region)
         if not url:
             return None
-        if region not in self._posters:
-            self._posters[region] = _WebhookPoster(url, self.role_id, self.client)
-        return self._posters[region]
+        if key not in self._posters:
+            self._posters[key] = _WebhookPoster(url, self.role_id, self.client)
+        return self._posters[key]
 
-    def _region_for(self, posting: Posting, company: Company | None) -> Region:
+    def _region_for(self, posting: Posting, company: Company | None) -> str:
         hint = company.region if company else None
         return classify_region(posting.location, hint=hint)
 
@@ -136,9 +148,10 @@ class RegionalDiscordNotifier:
     async def send_digest(self, items, now) -> None:
         if not items:
             return
-        by_region: dict[Region, list] = {"india": [], "germany": [], "other": []}
+        by_region: dict[str, list] = {}
         for p, s, c in items:
-            by_region[self._region_for(p, c)].append((p, s, c))
+            region = self._region_for(p, c)
+            by_region.setdefault(region, []).append((p, s, c))
         for region, group in by_region.items():
             if not group:
                 continue
@@ -159,16 +172,18 @@ class RegionalDiscordNotifier:
             }]})
 
     async def send_embed(self, title: str, description: str, color: int = 0xE67E22) -> None:
-        if not self._debug:
+        debug_url = self._webhooks.get("debug")
+        if not debug_url:
             return
-        poster = _WebhookPoster(self._debug, self.role_id, self.client)
+        poster = _WebhookPoster(debug_url, self.role_id, self.client)
         await poster._post({"embeds": [{"title": title[:240],
                                        "description": description[:4000], "color": color}]})
 
     async def send_run_report(self, report: RunReport) -> None:
-        if not self._debug:
+        debug_url = self._webhooks.get("debug")
+        if not debug_url:
             return
-        poster = _WebhookPoster(self._debug, self.role_id, self.client)
+        poster = _WebhookPoster(debug_url, self.role_id, self.client)
         for embed_group in build_run_report_messages(report):
             await poster._post({"embeds": embed_group})
 

@@ -49,6 +49,23 @@ jobs:
           DISCORD_WEBHOOK_URL_DE: ${{ secrets.DISCORD_WEBHOOK_URL_DE }}
           DISCORD_WEBHOOK_URL_OTHER: ${{ secrets.DISCORD_WEBHOOK_URL_OTHER }}
           DISCORD_WEBHOOK_URL_DEBUG: ${{ secrets.DISCORD_WEBHOOK_URL_DEBUG }}
+          # Adzuna per-country channels (2-letter ISO codes)
+          DISCORD_WEBHOOK_URL_AU: ${{ secrets.DISCORD_WEBHOOK_URL_AU }}
+          DISCORD_WEBHOOK_URL_AT: ${{ secrets.DISCORD_WEBHOOK_URL_AT }}
+          DISCORD_WEBHOOK_URL_BE: ${{ secrets.DISCORD_WEBHOOK_URL_BE }}
+          DISCORD_WEBHOOK_URL_BR: ${{ secrets.DISCORD_WEBHOOK_URL_BR }}
+          DISCORD_WEBHOOK_URL_CA: ${{ secrets.DISCORD_WEBHOOK_URL_CA }}
+          DISCORD_WEBHOOK_URL_CH: ${{ secrets.DISCORD_WEBHOOK_URL_CH }}
+          DISCORD_WEBHOOK_URL_ES: ${{ secrets.DISCORD_WEBHOOK_URL_ES }}
+          DISCORD_WEBHOOK_URL_FR: ${{ secrets.DISCORD_WEBHOOK_URL_FR }}
+          DISCORD_WEBHOOK_URL_GB: ${{ secrets.DISCORD_WEBHOOK_URL_GB }}
+          DISCORD_WEBHOOK_URL_IT: ${{ secrets.DISCORD_WEBHOOK_URL_IT }}
+          DISCORD_WEBHOOK_URL_MX: ${{ secrets.DISCORD_WEBHOOK_URL_MX }}
+          DISCORD_WEBHOOK_URL_NL: ${{ secrets.DISCORD_WEBHOOK_URL_NL }}
+          DISCORD_WEBHOOK_URL_NZ: ${{ secrets.DISCORD_WEBHOOK_URL_NZ }}
+          DISCORD_WEBHOOK_URL_PL: ${{ secrets.DISCORD_WEBHOOK_URL_PL }}
+          DISCORD_WEBHOOK_URL_SG: ${{ secrets.DISCORD_WEBHOOK_URL_SG }}
+          DISCORD_WEBHOOK_URL_ZA: ${{ secrets.DISCORD_WEBHOOK_URL_ZA }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           DISCORD_ROLE_ID: ${{ secrets.DISCORD_ROLE_ID }}
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
@@ -67,7 +84,11 @@ jobs:
           ARBEITNOW_GERMANY_ONLY: "false"
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
-          ADZUNA_MAX_PAGES: "10"
+          ADZUNA_APP_KEY_2: ${{ secrets.ADZUNA_APP_KEY_2 }}
+          ADZUNA_APP_KEY_3: ${{ secrets.ADZUNA_APP_KEY_3 }}
+          ADZUNA_APP_KEY_4: ${{ secrets.ADZUNA_APP_KEY_4 }}
+          ADZUNA_APP_KEY_5: ${{ secrets.ADZUNA_APP_KEY_5 }}
+          ADZUNA_MAX_PAGES: "5"
           ADZUNA_MAX_DAYS_OLD: "21"
         run: |
           set -o pipefail

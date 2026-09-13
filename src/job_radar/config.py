@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 import yaml
 
@@ -18,6 +18,7 @@ class Settings:
     webhook_url_de: str | None = None
     webhook_url_other: str | None = None
     webhook_url_debug: str | None = None
+    region_webhooks: dict[str, str] = field(default_factory=dict)
     sheet_id: str | None = None    # Google Sheet to mirror matches into (None => off)
     creds_path: str | None = None  # service-account JSON for that Sheet
 
@@ -64,7 +65,23 @@ def _truthy(v: str) -> bool:
     return str(v).lower() in ("1", "true", "yes", "on")
 
 
+def _load_region_webhooks() -> dict[str, str]:
+    """Load DISCORD_WEBHOOK_URL_* env vars into a region -> url map."""
+    out: dict[str, str] = {}
+    for key, val in os.environ.items():
+        if not key.startswith("DISCORD_WEBHOOK_URL_"):
+            continue
+        url = (val or "").strip()
+        if not url:
+            continue
+        region = key.removeprefix("DISCORD_WEBHOOK_URL_").lower()
+        out[region] = url
+    return out
+
+
 def any_discord_webhook(settings: Settings) -> bool:
+    if settings.region_webhooks:
+        return True
     return bool(settings.webhook_url_in or settings.webhook_url_de
                 or settings.webhook_url_other or settings.webhook_url_debug)
 
@@ -80,11 +97,13 @@ def load_settings() -> Settings:
     webhook_other = os.environ.get("DISCORD_WEBHOOK_URL_OTHER") or None
     webhook_debug = os.environ.get("DISCORD_WEBHOOK_URL_DEBUG") or None
     key = os.environ.get("LLM_API_KEY") or None
+    region_webhooks = _load_region_webhooks()
     settings = Settings(
         webhook_url_in=webhook_in,
         webhook_url_de=webhook_de,
         webhook_url_other=webhook_other,
         webhook_url_debug=webhook_debug,
+        region_webhooks=region_webhooks,
         llm_api_key=key,
         llm_model=os.environ.get("LLM_MODEL", ""),
         llm_provider=(os.environ.get("LLM_PROVIDER") or "gemini").lower(),

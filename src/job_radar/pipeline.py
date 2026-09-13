@@ -2,6 +2,7 @@ import asyncio
 import os
 import re
 import time
+from collections import defaultdict
 from dataclasses import replace
 from datetime import datetime, timezone
 
@@ -327,9 +328,7 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
     digest = []
     pinged = 0
     pinged_keys = set()
-    notif_counts = {"india": {"pinged": 0, "digest": 0},
-                    "germany": {"pinged": 0, "digest": 0},
-                    "other": {"pinged": 0, "digest": 0}}
+    notif_counts: dict[str, dict[str, int]] = defaultdict(lambda: {"pinged": 0, "digest": 0})
     for p, score in scored:
         company = cmap.get((p.ats, p.company))
         # Sheet gets every genuinely-good match (>= SHEET_MIN_FIT), INDEPENDENT of whether
@@ -414,7 +413,7 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
     report.deferred = len(deferred_uids)
     report.scored = len(scored)
     report.score_errors = stats["score_errors"]
-    report.notifications = notif_counts
+    report.notifications = dict(notif_counts)
     report.sheet_tracked = tracked
     report.sheet_closed = closed
     report.duration_sec = time.monotonic() - t0

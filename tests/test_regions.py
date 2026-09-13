@@ -16,3 +16,10 @@ def test_classify_germany():
 def test_classify_other():
     assert classify_region("Toronto, Canada") == "other"
     assert classify_region("") == "other"
+
+
+def test_classify_adzuna_country_hint():
+    assert classify_region("", hint="gb") == "gb"
+    assert classify_region("", hint="sg") == "sg"
+    assert classify_region("London", hint="gb") == "gb"
+    assert classify_region("", hint="germany") == "germany"

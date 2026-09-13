@@ -18,6 +18,7 @@ def _settings(**kw):
         "webhook_url_de": "https://de",
         "webhook_url_other": "https://other",
         "webhook_url_debug": "https://debug",
+        "region_webhooks": {},
     }
     base.update(kw)
     return Settings(**base)
@@ -36,6 +37,22 @@ async def test_regional_notifier_routes_india():
                     location="Bengaluru", url="https://j", posted_at=NOW, description="d")
         await n.send_one(p, Score(80, "r"), Urgency.MEDIUM, Company(slug="c", ats="greenhouse"), NOW)
     assert sent == ["https://in"]
+
+
+async def test_regional_notifier_routes_adzuna_country():
+    sent = []
+
+    def handler(request):
+        sent.append(str(request.url))
+        return httpx.Response(204)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        n = RegionalDiscordNotifier(_settings(webhook_url_other=None, region_webhooks={"gb": "https://gb"}), client=client)
+        p = Posting(uid="x:1", ats="adzuna", company="adzuna-gb", title="SWE",
+                    location="London", url="https://j", posted_at=NOW, description="d")
+        co = Company(slug="adzuna-gb", ats="adzuna", region="gb")
+        await n.send_one(p, Score(80, "r"), Urgency.MEDIUM, co, NOW)
+    assert sent == ["https://gb"]
 
 
 async def test_send_run_report_posts_to_debug():
