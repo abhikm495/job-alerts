@@ -1886,10 +1886,6 @@ companies:
   ats: smartrecruiters
   tier: target
   token: TomTom
-- slug: devjobs-de
-  ats: devjobs
-  tier: target
-  region: germany
 - slug: bundesagentur-de
   ats: bundesagentur
   tier: target

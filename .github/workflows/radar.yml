@@ -61,7 +61,6 @@ jobs:
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
           GOOGLE_CREDENTIALS_PATH: google-creds.json
           SCORE_CAP: "0"
-          DEVJOBS_MAX_PAGES: "30"
           BA_MAX_PAGES: "20"
           BA_VEROEFFENTLICHTSEIT: "14"
           ARBEITNOW_MAX_PAGES: "10"
