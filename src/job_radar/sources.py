@@ -4,7 +4,7 @@ import httpx
 
 from .adapters import (adzuna, amazonjobs, arbeitnow, ashby, avature, bamboohr, beesite,
                        breezy, bundesagentur, deloitte, eightfold, freehire, googlecareers, greenhouse,
-                       higher_gs, icims, infosys, join_com, jobstream, lever, linkedin,
+                       higher_gs, icims, infosys, jobsbase, join_com, jobstream, lever, linkedin,
                        mercedes, oracle, personio, phenom, publicissapient, recruitee,
                        ripplehire, simplify, smartrecruiters, successfactors, talentbrew,
                        tcs_ibegin, techmahindra, workable, workday, zwayam)
@@ -42,6 +42,7 @@ ADAPTERS = {
     "arbeitnow": arbeitnow,
     "adzuna": adzuna,
     "freehire": freehire,
+    "jobsbase": jobsbase,
     "mercedes": mercedes,
     "beesite": beesite,
     "higher_gs": higher_gs,
@@ -86,7 +87,7 @@ async def fetch_all(companies, *, concurrency=45, client=None):
 
 ENRICHERS = {
     "workday", "smartrecruiters", "oracle", "join_com", "breezy",
-    "bundesagentur",
+    "bundesagentur", "jobsbase",
 }
 
 

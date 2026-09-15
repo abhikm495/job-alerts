@@ -94,6 +94,9 @@ jobs:
           FREEHIRE_OPEN_WITHIN_DAYS: "30"
           FREEHIRE_PAGE_SIZE: "100"
           FREEHIRE_CATEGORIES: "software_engineering,backend,frontend,fullstack,architecture,solutions_engineering"
+          JOBSBASE_MAX_PAGES: "5"
+          JOBSBASE_POSTED_WITHIN: "30d"
+          JOBSBASE_PAGE_SIZE: "100"
         run: |
           set -o pipefail
           python -m job_radar | tee run.log

@@ -1994,3 +1994,12 @@ companies:
   tier: target
   token: india_all
   region: in
+- slug: jobsbase-visa
+  ats: jobsbase
+  tier: target
+  token: visa_global
+- slug: jobsbase-in
+  ats: jobsbase
+  tier: target
+  token: india_all
+  region: in

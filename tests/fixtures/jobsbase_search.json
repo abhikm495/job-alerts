@@ -1,0 +1,42 @@
+{
+  "jobs": [
+    {
+      "id": "senior-engineer-visa-de-abc",
+      "title": "Senior Software Engineer",
+      "company": "TechCo",
+      "display_location": "Berlin, Germany",
+      "city": "Berlin",
+      "country": "DE",
+      "locations": [
+        {"city": "Berlin", "region": "europe", "country": "DE", "country_name": "Germany"}
+      ],
+      "type": "full-time",
+      "workplace": "hybrid",
+      "seniority_level": "senior",
+      "visa_sponsorship": true,
+      "skills": ["TypeScript", "React", "Node.js"],
+      "job_url": "https://jobsbase.io/jobs/senior-engineer-visa-de-abc",
+      "posted_at": "2026-09-01T10:00:00Z"
+    },
+    {
+      "id": "founding-engineer-blr-xyz",
+      "title": "Founding Engineer",
+      "company": "StartupIN",
+      "display_location": "Bengaluru, India",
+      "city": "Bengaluru",
+      "country": "IN",
+      "locations": [
+        {"city": "Bengaluru", "region": "asia_pacific", "country": "IN", "country_name": "India"}
+      ],
+      "type": "full-time",
+      "workplace": "on-site",
+      "seniority_level": "senior",
+      "visa_sponsorship": false,
+      "skills": ["Python", "FastAPI"],
+      "job_url": "https://jobsbase.io/jobs/founding-engineer-blr-xyz",
+      "posted_at": "2026-09-05T12:00:00Z"
+    }
+  ],
+  "has_more": false,
+  "next_cursor": null
+}
