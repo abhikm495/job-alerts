@@ -97,6 +97,8 @@ jobs:
           JOBSBASE_MAX_PAGES: "5"
           JOBSBASE_POSTED_WITHIN: "30d"
           JOBSBASE_PAGE_SIZE: "100"
+          HIMALAYAS_MAX_PAGES: "5"
+          REMOTIVE_LIMIT: "100"
         run: |
           set -o pipefail
           python -m job_radar | tee run.log

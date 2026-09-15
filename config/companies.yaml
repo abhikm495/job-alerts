@@ -2003,3 +2003,15 @@ companies:
   tier: target
   token: india_all
   region: in
+- slug: himalayas-worldwide
+  ats: himalayas
+  tier: target
+  token: worldwide
+- slug: himalayas-in
+  ats: himalayas
+  tier: target
+  token: india
+  region: in
+- slug: remotive
+  ats: remotive
+  tier: target

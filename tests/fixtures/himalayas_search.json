@@ -1,0 +1,33 @@
+{
+  "totalCount": 100,
+  "jobs": [
+    {
+      "title": "Senior Backend Engineer",
+      "excerpt": "Build APIs with Go.",
+      "companyName": "Acme",
+      "companySlug": "acme",
+      "employmentType": "Full Time",
+      "seniority": ["Senior"],
+      "locationRestrictions": [],
+      "description": "<p>Remote backend role.</p>",
+      "pubDate": 1725120000,
+      "applicationLink": "https://himalayas.app/companies/acme/jobs/senior-backend-engineer",
+      "guid": "https://himalayas.app/companies/acme/jobs/senior-backend-engineer"
+    },
+    {
+      "title": "Full Stack Developer",
+      "excerpt": "React and Node.",
+      "companyName": "StartupIN",
+      "companySlug": "startupin",
+      "employmentType": "Full Time",
+      "seniority": ["Mid-level"],
+      "locationRestrictions": [
+        {"alpha2": "IN", "name": "India", "slug": "india"}
+      ],
+      "description": "India remote full stack.",
+      "pubDate": 1725200000,
+      "applicationLink": "https://himalayas.app/companies/startupin/jobs/full-stack-developer",
+      "guid": "https://himalayas.app/companies/startupin/jobs/full-stack-developer"
+    }
+  ]
+}

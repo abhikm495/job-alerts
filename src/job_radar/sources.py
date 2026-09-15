@@ -4,8 +4,8 @@ import httpx
 
 from .adapters import (adzuna, amazonjobs, arbeitnow, ashby, avature, bamboohr, beesite,
                        breezy, bundesagentur, deloitte, eightfold, freehire, googlecareers, greenhouse,
-                       higher_gs, icims, infosys, jobsbase, join_com, jobstream, lever, linkedin,
-                       mercedes, oracle, personio, phenom, publicissapient, recruitee,
+                       higher_gs, himalayas, icims, infosys, jobsbase, join_com, jobstream, lever, linkedin,
+                       mercedes, oracle, personio, phenom, publicissapient, recruitee, remotive,
                        ripplehire, simplify, smartrecruiters, successfactors, talentbrew,
                        tcs_ibegin, techmahindra, workable, workday, zwayam)
 from .adapters.base import TIMEOUT
@@ -43,6 +43,8 @@ ADAPTERS = {
     "adzuna": adzuna,
     "freehire": freehire,
     "jobsbase": jobsbase,
+    "himalayas": himalayas,
+    "remotive": remotive,
     "mercedes": mercedes,
     "beesite": beesite,
     "higher_gs": higher_gs,
