@@ -5,11 +5,32 @@ import httpx
 
 from .filters import visa_note
 from .models import Company, Posting, Score, Urgency
-from .regions import classify_region, webhook_region
+from .regions import classify_region, region_for_posting, webhook_region
 from .report import RunReport, build_run_report_messages
 
 COLORS = {Urgency.HIGH: 0xE74C3C, Urgency.MEDIUM: 0xF1C40F, Urgency.LOW: 0x2ECC71}
+# Visa-sponsored roles: purple palette so the embed sidebar stands out at a glance.
+VISA_COLORS = {Urgency.HIGH: 0x6C3483, Urgency.MEDIUM: 0x9B59B6, Urgency.LOW: 0xBB8FCE}
 _TAG = re.compile(r"<[^>]+>")
+
+
+def _visa_sponsored(posting: Posting) -> bool:
+    return bool((posting.raw or {}).get("visa_sponsored"))
+
+
+def _embed_color(posting: Posting, urgency: Urgency) -> int:
+    if _visa_sponsored(posting):
+        return VISA_COLORS[urgency]
+    return COLORS[urgency]
+
+
+def _ping_content(posting: Posting, urgency: Urgency, role_id: str | None) -> str | None:
+    parts: list[str] = []
+    if _visa_sponsored(posting):
+        parts.append("🛂 **VISA SPONSORSHIP**")
+    if urgency == Urgency.HIGH and role_id:
+        parts.append(f"<@&{role_id}>")
+    return " · ".join(parts) if parts else None
 
 
 def _snippet(text: str, n: int = 320) -> str:
@@ -52,12 +73,15 @@ def build_embed(posting: Posting, score: Score, urgency: Urgency,
     snip = _snippet(posting.description)
     if snip:
         fields.append({"name": "About the role", "value": snip[:1024], "inline": False})
+    title = (posting.title or "(untitled)")[:240]
     embed = {
-        "title": (posting.title or "(untitled)")[:240],
-        "color": COLORS[urgency],
+        "title": title,
+        "color": _embed_color(posting, urgency),
         "fields": fields,
         "footer": {"text": (", ".join(score.tags) or tier)[:200]},
     }
+    if _visa_sponsored(posting):
+        embed["author"] = {"name": "🛂 VISA SPONSORSHIP"}
     if posting.url:
         embed["url"] = posting.url
     return embed
@@ -98,7 +122,7 @@ def _build_webhook_map(settings) -> dict[str, str]:
 
 class DiscordNotifier(_WebhookPoster):
     async def send_one(self, posting, score, urgency, company, now) -> None:
-        content = f"<@&{self.role_id}>" if (urgency == Urgency.HIGH and self.role_id) else None
+        content = _ping_content(posting, urgency, self.role_id)
         await self._post({"content": content,
                           "embeds": [build_embed(posting, score, urgency, company, now)]})
 
@@ -141,15 +165,14 @@ class RegionalDiscordNotifier:
         return self._posters[key]
 
     def _region_for(self, posting: Posting, company: Company | None) -> str:
-        hint = company.region if company else None
-        return classify_region(posting.location, hint=hint)
+        return region_for_posting(posting, company)
 
     async def send_one(self, posting, score, urgency, company, now) -> None:
         region = self._region_for(posting, company)
         poster = self._poster(region)
         if poster is None:
             return
-        content = f"<@&{self.role_id}>" if (urgency == Urgency.HIGH and self.role_id) else None
+        content = _ping_content(posting, urgency, self.role_id)
         await poster._post({"content": content,
                             "embeds": [build_embed(posting, score, urgency, company, now)]})
 
@@ -200,7 +223,8 @@ class ConsoleNotifier:
     """Used in dry-run / local. Prints instead of posting."""
 
     async def send_one(self, posting, score, urgency, company, now) -> None:
-        print(f"[{urgency.value.upper()}] {posting.title} @ {posting.company} "
+        visa = " [VISA]" if _visa_sponsored(posting) else ""
+        print(f"[{urgency.value.upper()}]{visa} {posting.title} @ {posting.company} "
               f"({score.value}/100) {posting.url} :: {score.reason}")
 
     async def send_digest(self, items, now) -> None:

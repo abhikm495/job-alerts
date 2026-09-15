@@ -43,6 +43,16 @@ def webhook_region(region: str) -> str:
     return _HINT_ALIASES.get(key, key)
 
 
+def region_for_posting(posting, company=None) -> str:
+    """Discord routing region from company hint, ISO country codes on the posting, then location."""
+    raw = getattr(posting, "raw", None) or {}
+    countries = raw.get("countries") or []
+    hint = company.region if company else None
+    if not hint and countries:
+        hint = str(countries[0]).lower()
+    return classify_region(getattr(posting, "location", "") or "", hint=hint)
+
+
 def classify_region(location: str, *, hint: str | None = None) -> str:
     """Return a region key for Discord routing.
 

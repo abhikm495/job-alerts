@@ -90,6 +90,10 @@ jobs:
           ADZUNA_APP_KEY_5: ${{ secrets.ADZUNA_APP_KEY_5 }}
           ADZUNA_MAX_PAGES: "5"
           ADZUNA_MAX_DAYS_OLD: "21"
+          FREEHIRE_MAX_PAGES: "5"
+          FREEHIRE_OPEN_WITHIN_DAYS: "30"
+          FREEHIRE_PAGE_SIZE: "100"
+          FREEHIRE_CATEGORIES: "software_engineering,backend,frontend,fullstack,architecture,solutions_engineering"
         run: |
           set -o pipefail
           python -m job_radar | tee run.log

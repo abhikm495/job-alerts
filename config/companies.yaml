@@ -1985,3 +1985,12 @@ companies:
   tier: target
   token: software
   region: za
+- slug: freehire-visa
+  ats: freehire
+  tier: target
+  token: visa_global
+- slug: freehire-in
+  ats: freehire
+  tier: target
+  token: india_all
+  region: in

@@ -3,7 +3,9 @@ from datetime import datetime, timezone, timedelta
 import httpx
 
 from job_radar.models import Posting, Score, Company, Urgency
-from job_radar.notify import build_embed, DiscordNotifier, ConsoleNotifier
+from job_radar.notify import (
+    VISA_COLORS, build_embed, COLORS, DiscordNotifier, ConsoleNotifier, _ping_content,
+)
 
 NOW = datetime(2026, 6, 1, 12, tzinfo=timezone.utc)
 COMPANY = Company(slug="cohere", ats="ashby", tier="dream")
@@ -84,6 +86,48 @@ async def test_digest_shows_overflow_count():
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         await DiscordNotifier("https://hook", client=client).send_digest(items, NOW)
     assert "and 5 more" in sent["body"]  # 30 items: 25 listed + overflow line
+
+
+def test_build_embed_visa_sponsored_styling():
+    p = Posting(
+        uid="freehire:x", ats="freehire", company="freehire-visa", title="SWE",
+        location="Berlin", url="https://j", posted_at=NOW, description="d",
+        raw={"visa_sponsored": True, "countries": ["de"]},
+    )
+    e = build_embed(p, Score(85, "visa fit"), Urgency.HIGH, None, NOW)
+    assert e["color"] == VISA_COLORS[Urgency.HIGH]
+    assert e["author"]["name"] == "🛂 VISA SPONSORSHIP"
+    assert e["color"] != COLORS[Urgency.HIGH]
+
+
+def test_ping_content_includes_visa_banner():
+    p = Posting(
+        uid="freehire:x", ats="freehire", company="freehire-visa", title="SWE",
+        location="Berlin", url="https://j", posted_at=NOW, description="d",
+        raw={"visa_sponsored": True},
+    )
+    content = _ping_content(p, Urgency.MEDIUM, None)
+    assert content == "🛂 **VISA SPONSORSHIP**"
+
+
+async def test_discord_notifier_visa_and_role_ping():
+    sent = {}
+
+    def handler(request):
+        sent["body"] = request.read().decode()
+        return httpx.Response(204)
+
+    p = Posting(
+        uid="freehire:x", ats="freehire", company="freehire-visa", title="SWE",
+        location="Berlin", url="https://j", posted_at=NOW, description="d",
+        raw={"visa_sponsored": True},
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        n = DiscordNotifier("https://hook", role_id="999", client=client)
+        await n.send_one(p, Score(90, "r"), Urgency.HIGH, COMPANY, NOW)
+
+    assert "VISA SPONSORSHIP" in sent["body"]
+    assert "<@&999>" in sent["body"]
 
 
 async def test_send_embed_posts_title_and_body():

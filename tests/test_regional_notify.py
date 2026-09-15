@@ -39,6 +39,44 @@ async def test_regional_notifier_routes_india():
     assert sent == ["https://in"]
 
 
+async def test_regional_notifier_routes_freehire_country():
+    sent = []
+
+    def handler(request):
+        sent.append(str(request.url))
+        return httpx.Response(204)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        n = RegionalDiscordNotifier(_settings(), client=client)
+        p = Posting(
+            uid="freehire:x", ats="freehire", company="freehire-visa", title="SWE",
+            location="Berlin", url="https://j", posted_at=NOW, description="d",
+            raw={"countries": ["de"], "visa_sponsored": True},
+        )
+        co = Company(slug="freehire-visa", ats="freehire")
+        await n.send_one(p, Score(80, "r"), Urgency.MEDIUM, co, NOW)
+    assert sent == ["https://de"]
+
+
+async def test_regional_notifier_routes_freehire_india_board():
+    sent = []
+
+    def handler(request):
+        sent.append(str(request.url))
+        return httpx.Response(204)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        n = RegionalDiscordNotifier(_settings(), client=client)
+        p = Posting(
+            uid="freehire:x", ats="freehire", company="freehire-in", title="Java Dev",
+            location="Remote", url="https://j", posted_at=NOW, description="d",
+            raw={"countries": ["us"], "visa_sponsored": False},
+        )
+        co = Company(slug="freehire-in", ats="freehire", region="in")
+        await n.send_one(p, Score(80, "r"), Urgency.MEDIUM, co, NOW)
+    assert sent == ["https://in"]
+
+
 async def test_regional_notifier_routes_adzuna_country():
     sent = []
 

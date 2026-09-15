@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "public_slug": "stripe-swe-berlin-visa",
+      "company": "Stripe",
+      "title": "Software Engineer",
+      "location": "Berlin",
+      "countries": ["DE"],
+      "work_mode": "hybrid",
+      "enrichment": {"visa_sponsorship": true, "work_mode": "hybrid"},
+      "url": "https://freehire.me/jobs/stripe-swe-berlin-visa",
+      "posted_at": "2026-09-01T10:00:00Z",
+      "description": "Build payments infrastructure in Python."
+    },
+    {
+      "public_slug": "infosys-java-blr",
+      "company": "Infosys",
+      "title": "Java Developer",
+      "location": "Bengaluru",
+      "countries": ["IN"],
+      "enrichment": {"visa_sponsorship": false},
+      "url": "https://freehire.me/jobs/infosys-java-blr",
+      "posted_at": "2026-09-10T10:00:00Z",
+      "description": "Enterprise Java services."
+    },
+    {
+      "public_slug": "acme-london",
+      "company": "Acme",
+      "title": "Backend Engineer",
+      "location": "London",
+      "countries": ["GB"],
+      "enrichment": {"visa_sponsorship": true},
+      "url": "https://freehire.me/jobs/acme-london",
+      "posted_at": "2026-09-05T12:00:00Z",
+      "description": "<p>Go and <b>Kubernetes</b>.</p>"
+    }
+  ]
+}
