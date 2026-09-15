@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 
 import yaml
 
@@ -25,9 +26,23 @@ class Settings:
 
 @dataclass(frozen=True)
 class Config:
-    profile: Profile
+    profiles: list[Profile]
     companies: list[Company]
     settings: Settings
+
+    @property
+    def profile(self) -> Profile:
+        """Primary profile (backward compatibility)."""
+        return self.profiles[0]
+
+
+def _profile_name_from_path(path: str, d: dict) -> str:
+    if d.get("name"):
+        return str(d["name"]).strip().lower()
+    stem = Path(path).stem
+    if stem.startswith("profile-"):
+        return stem.removeprefix("profile-").lower()
+    return "default"
 
 
 def load_profile(path: str) -> Profile:
@@ -45,7 +60,34 @@ def load_profile(path: str) -> Profile:
         digest_threshold=int(d.get("digest_threshold", 50)),
         high_score=int(d.get("high_score", 80)),
         high_fresh_hours=int(d.get("high_fresh_hours", 2)),
+        name=_profile_name_from_path(path, d),
     )
+
+
+def load_profiles(primary_path: str = "config/profile.yaml") -> list[Profile]:
+    """Load one or more scoring profiles. PROFILE_PATHS (comma-separated) overrides the
+    default pair: primary + config/profile-raj.yaml when that file exists."""
+    extra = os.environ.get("PROFILE_PATHS", "").strip()
+    if extra:
+        paths = [p.strip() for p in extra.split(",") if p.strip()]
+    else:
+        paths = [primary_path]
+        raj = Path(primary_path).parent / "profile-raj.yaml"
+        if raj.is_file() and str(raj) != primary_path:
+            paths.append(str(raj))
+    out: list[Profile] = []
+    seen_names: set[str] = set()
+    for path in paths:
+        if not Path(path).is_file():
+            continue
+        profile = load_profile(path)
+        if profile.name in seen_names:
+            continue
+        seen_names.add(profile.name)
+        out.append(profile)
+    if not out:
+        raise FileNotFoundError(f"no profile files found (tried: {paths})")
+    return out
 
 
 def load_companies(path: str) -> list[Company]:
@@ -122,4 +164,4 @@ def load_settings() -> Settings:
 
 def load_config(profile_path: str = "config/profile.yaml",
                 companies_path: str = "config/companies.yaml") -> Config:
-    return Config(load_profile(profile_path), load_companies(companies_path), load_settings())
+    return Config(load_profiles(profile_path), load_companies(companies_path), load_settings())

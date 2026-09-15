@@ -45,6 +45,14 @@ def passes_rules(posting: Posting, profile: Profile, now: datetime | None = None
     return rule_rejection(posting, profile, now) is None
 
 
+def passes_any_rules(posting: Posting, profiles, now: datetime | None = None) -> bool:
+    return any(passes_rules(posting, p, now) for p in profiles)
+
+
+def eligible_profiles(posting: Posting, profiles, now: datetime | None = None) -> list[Profile]:
+    return [p for p in profiles if passes_rules(posting, p, now)]
+
+
 def rule_rejection(posting: Posting, profile: Profile, now: datetime | None = None) -> str | None:
     """Return a rejection reason key, or None if the posting passes all rules."""
     now = now or datetime.now(timezone.utc)

@@ -41,7 +41,7 @@ def _config(tmp_path):
     companies = [Company(slug="c", ats="greenhouse", tier="target")]
     settings = Settings(llm_api_key=None, llm_model="m", llm_provider="gemini",
                         role_id=None, seen_path=str(tmp_path / "seen.json"), dry_run=True)
-    return Config(profile, companies, settings)
+    return Config([profile], companies, settings)
 
 
 def _prime_seen(config):
@@ -276,7 +276,7 @@ async def test_newly_added_board_is_primed_silently_not_flooded(tmp_path, monkey
     companies = [Company(slug="c", ats="greenhouse"), Company(slug="d", ats="greenhouse")]
     settings = Settings(llm_api_key=None, llm_model="m", llm_provider="gemini",
                         role_id=None, seen_path=str(tmp_path / "seen.json"), dry_run=True)
-    config = Config(profile, companies, settings)
+    config = Config([profile], companies, settings)
     _prime_seen(config)  # marks company 'c' as known; 'd' is therefore newly added
 
     notifier = FakeNotifier()
@@ -326,7 +326,7 @@ async def test_backfill_requires_a_sheet(tmp_path, monkeypatch):
 
 class ErrorProvider:
     """Mimics an LLM outage / 429: returns a zero score flagged not-ok."""
-    async def score(self, posting, profile):
+    async def score(self, posting, profiles):
         return Score(0, "LLM error: 429", ok=False)
 
 
@@ -342,7 +342,7 @@ async def test_error_score_neither_pings_nor_writes(tmp_path, monkeypatch):
     companies = [Company(slug="c", ats="greenhouse", tier="dream")]
     settings = Settings(llm_api_key=None, llm_model="m", llm_provider="gemini",
                         role_id=None, seen_path=str(tmp_path / "seen.json"), dry_run=True)
-    config = Config(profile, companies, settings)
+    config = Config([profile], companies, settings)
     _prime_seen(config)
 
     sink = FakeSink()
@@ -370,6 +370,34 @@ async def test_score_cap_zero_scores_all(tmp_path, monkeypatch):
 
     stats = await pipeline.run(config, provider=FakeProvider(value=90), notifier=FakeNotifier(), now=NOW)
     assert stats["survivors"] == 5 and stats["deferred"] == 0
+
+
+async def test_multi_profile_pings_when_either_matches(tmp_path, monkeypatch):
+    staff = Posting(uid="greenhouse:c:staff", ats="greenhouse", company="c",
+                    title="Staff .NET Engineer", location="Toronto", url="u1",
+                    posted_at=NOW, description="C# backend")
+
+    async def fake_fetch_all(companies, **kw):
+        return [staff], [], []
+
+    monkeypatch.setattr(pipeline, "fetch_all", fake_fetch_all)
+
+    abhi = Profile(name="abhi", summary="s", title_include=["engineer"], title_exclude=["staff"],
+                   locations_allow=["toronto"], locations_block=[], freshness_days=21,
+                   ping_threshold=70, digest_threshold=55, high_score=80)
+    raj = Profile(name="raj", summary="s", title_include=["engineer", ".net"], title_exclude=[],
+                  locations_allow=["toronto"], locations_block=[], freshness_days=21,
+                  ping_threshold=70, digest_threshold=55, high_score=80)
+    companies = [Company(slug="c", ats="greenhouse", tier="target")]
+    settings = Settings(llm_api_key=None, llm_model="m", llm_provider="gemini",
+                        role_id=None, seen_path=str(tmp_path / "seen.json"), dry_run=True)
+    config = Config([abhi, raj], companies, settings)
+    _prime_seen(config)
+
+    notifier = FakeNotifier()
+    provider = FakeProvider(profile_values={"abhi": 40, "raj": 88})
+    await pipeline.run(config, provider=provider, notifier=notifier, now=NOW)
+    assert len(notifier.ones) == 1  # raj passes rules + threshold; abhi blocked by title_exclude
 
 
 async def test_score_cap_defers_and_carries_over(tmp_path, monkeypatch):

@@ -7,36 +7,43 @@ from .models import Posting, Profile, Score
 
 # --- shared prompt pieces (provider-neutral) ---
 
-INSTRUCTIONS = (
-    "You screen internship / new-grad postings for ONE specific candidate (described "
-    "below). Read the role's actual requirements and qualifications, then score 0-100 by "
-    "judging TWO things together:\n"
-    "1) REALISTIC CHANCE: would this candidate plausibly be competitive? Compare the "
-    "stated requirements to the candidate's real skills and year in school. Heavily "
-    "penalize roles that need a domain or skill the candidate does NOT list (e.g. "
-    "Android/iOS/mobile, embedded/firmware/hardware, kernel, game/graphics, a specific "
-    "language they never mention), senior/staff/manager titles, security clearance, or "
-    "several years of experience. A role titled 'Software Engineer Intern' in a domain "
-    "they have no background in is a WEAK match, not a strong one, even though the title "
-    "looks right.\n"
-    "2) GOOD FOR THEM: reward strong overlap with the candidate's listed strengths and "
-    "target roles (SWE / AI-ML / data). Give PARTIAL credit to sensible tangential "
-    "stretches that still use those strengths (e.g. a data or full-stack role at an AI "
-    "company). Be calibrated: most postings should land 30-70; reserve 80+ for genuinely "
-    "strong, realistic matches.\n"
+SINGLE_INSTRUCTIONS = (
+    "You screen job postings for ONE specific candidate (described below). Read the role's "
+    "actual requirements and qualifications, then score 0-100 by judging TWO things together:\n"
+    "1) REALISTIC CHANCE: would this candidate plausibly be competitive? Compare the stated "
+    "requirements to the candidate's real skills and experience level. Heavily penalize roles "
+    "that need a domain or skill the candidate does NOT list (e.g. Android/iOS/mobile, "
+    "embedded/firmware/hardware, kernel, game/graphics, a specific language they never mention), "
+    "or experience far above/below their level.\n"
+    "2) GOOD FOR THEM: reward strong overlap with the candidate's listed strengths and target "
+    "roles. Give PARTIAL credit to sensible tangential stretches. Be calibrated: most postings "
+    "should land 30-70; reserve 80+ for genuinely strong, realistic matches.\n"
     "Respond as JSON {score, reason, tags, resume, term}; reason = one short sentence naming "
-    "the key fit or gap; tags = a few lowercase labels; resume = which of the candidate's two "
-    "resumes to use for this role: \"ai\" for AI / ML / research / data-science / ML-"
-    "engineering roles, or \"swe\" for general software-engineering / backend / full-stack / "
-    "developer roles; term = the work-term timing EXACTLY as the posting states it — season "
-    "+ year and start/end or length if given (e.g. \"Summer 2027 (May-Aug)\", \"Fall 2027, "
-    "4 months\", \"16-month, May 2027-Aug 2028\"); use \"not stated\" if the posting gives no "
-    "dates/season."
+    "the key fit or gap; tags = a few lowercase labels; resume = \"swe\" for general software-"
+    "engineering roles or \"ai\" for AI/ML/data roles; term = work-term timing EXACTLY as stated "
+    "(e.g. \"Summer 2027\", \"full-time\", \"not stated\")."
+)
+
+MULTI_INSTRUCTIONS = (
+    "You screen job postings for MULTIPLE candidates (listed below). Score EACH candidate "
+    "independently 0-100 using the same criteria: realistic chance given their experience "
+    "and skills, plus how good the role is for them. Calibrate per candidate — a senior .NET "
+    "lead role may score high for a 9-year backend lead and low for a 2-year React developer.\n"
+    "Respond as JSON {scores, reason, tags, term} where:\n"
+    "- scores = object mapping each candidate id (given below) to an integer 0-100\n"
+    "- reason = one short sentence noting who fits best and the key fit or gap\n"
+    "- tags = a few lowercase labels\n"
+    "- term = work-term timing as stated (\"full-time\", \"not stated\", or season/year if intern)\n"
+    "Most postings should land 30-70 per candidate; reserve 80+ for genuinely strong matches."
 )
 
 
 def _candidate_block(profile: Profile) -> str:
-    return f"CANDIDATE:\n{profile.summary}"
+    return f"CANDIDATE ({profile.name}):\n{profile.summary}"
+
+
+def _candidates_block(profiles: list[Profile]) -> str:
+    return "\n\n".join(_candidate_block(p) for p in profiles)
 
 
 def _posting_block(posting: Posting) -> str:
@@ -45,9 +52,20 @@ def _posting_block(posting: Posting) -> str:
             f"Location: {posting.location}\nDescription: {desc}")
 
 
-def build_prompt(posting: Posting, profile: Profile) -> str:
-    """Single-string prompt (used by Gemini)."""
-    return f"{INSTRUCTIONS}\n\n{_candidate_block(profile)}\n\n{_posting_block(posting)}\n"
+def _instructions(profiles: list[Profile]) -> str:
+    if len(profiles) <= 1:
+        return SINGLE_INSTRUCTIONS
+    ids = ", ".join(p.name for p in profiles)
+    return f"{MULTI_INSTRUCTIONS}\nCandidate ids: {ids}"
+
+
+def build_prompt(posting: Posting, profiles: list[Profile]) -> str:
+    """Single-string prompt (used by Gemini). `profiles` is one or more candidates."""
+    if len(profiles) == 1:
+        body = _candidate_block(profiles[0])
+    else:
+        body = _candidates_block(profiles)
+    return f"{_instructions(profiles)}\n\n{body}\n\n{_posting_block(posting)}\n"
 
 
 def _as_dict(obj) -> dict:
@@ -81,46 +99,85 @@ def _extract_json(text: str) -> dict:
         return {}
 
 
-def _coerce_score(obj) -> Score:
-    if not isinstance(obj, dict) or not obj:
-        return Score(value=0, reason="unparseable LLM response", tags=[], ok=False)
+def _parse_int_score(raw) -> int:
     try:
-        # Tolerate ints, int-strings, floats, and percentages like "85%" / "80.5".
-        val = int(round(float(str(obj.get("score", 0)).strip().rstrip("%") or 0)))
+        val = int(round(float(str(raw).strip().rstrip("%") or 0)))
     except (TypeError, ValueError):
         val = 0
-    val = max(0, min(100, val))
+    return max(0, min(100, val))
+
+
+def _coerce_score(obj, profiles: list[Profile] | None = None) -> Score:
+    profiles = profiles or []
+    if not isinstance(obj, dict) or not obj:
+        return Score(value=0, reason="unparseable LLM response", tags=[], ok=False)
+
+    profile_scores: dict[str, int] = {}
+    scores_obj = obj.get("scores")
+    if isinstance(scores_obj, dict) and profiles:
+        for p in profiles:
+            if p.name in scores_obj:
+                profile_scores[p.name] = _parse_int_score(scores_obj[p.name])
+    if not profile_scores and profiles:
+        # Single-score shape: {"score": 72} — attribute to the sole profile.
+        if len(profiles) == 1:
+            profile_scores[profiles[0].name] = _parse_int_score(obj.get("score", 0))
+        elif isinstance(scores_obj, dict):
+            for key, val in scores_obj.items():
+                profile_scores[str(key).lower()] = _parse_int_score(val)
+    if not profile_scores:
+        profile_scores = {"default": _parse_int_score(obj.get("score", 0))}
+
+    val = max(profile_scores.values()) if profile_scores else 0
     reason = str(obj.get("reason", ""))[:300]
     tags = [str(t) for t in obj.get("tags", []) if isinstance(t, (str, int))][:8]
     resume = str(obj.get("resume", "")).strip().lower()
     resume = resume if resume in ("ai", "swe") else ""
     term = str(obj.get("term", "")).strip()[:80]
-    return Score(value=val, reason=reason, tags=tags, resume=resume, term=term)
+    return Score(value=val, reason=reason, tags=tags, resume=resume, term=term,
+                 profile_scores=profile_scores)
 
 
 # --- Gemini (REST) ---
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-GEMINI_SCHEMA = {
-    "type": "OBJECT",
-    "properties": {
-        "score": {"type": "INTEGER"},
-        "reason": {"type": "STRING"},
-        "tags": {"type": "ARRAY", "items": {"type": "STRING"}},
-        "resume": {"type": "STRING"},
-        "term": {"type": "STRING"},
-    },
-    "required": ["score", "reason", "tags", "resume", "term"],
-}
+def _gemini_schema(profiles: list[Profile]) -> dict:
+    if len(profiles) <= 1:
+        return {
+            "type": "OBJECT",
+            "properties": {
+                "score": {"type": "INTEGER"},
+                "reason": {"type": "STRING"},
+                "tags": {"type": "ARRAY", "items": {"type": "STRING"}},
+                "resume": {"type": "STRING"},
+                "term": {"type": "STRING"},
+            },
+            "required": ["score", "reason", "tags", "resume", "term"],
+        }
+    names = [p.name for p in profiles]
+    return {
+        "type": "OBJECT",
+        "properties": {
+            "scores": {
+                "type": "OBJECT",
+                "properties": {n: {"type": "INTEGER"} for n in names},
+                "required": names,
+            },
+            "reason": {"type": "STRING"},
+            "tags": {"type": "ARRAY", "items": {"type": "STRING"}},
+            "term": {"type": "STRING"},
+        },
+        "required": ["scores", "reason", "tags", "term"],
+    }
 
 
-def parse_score(data: dict) -> Score:
+def parse_score(data: dict, profiles: list[Profile] | None = None) -> Score:
     """Parse a Gemini generateContent response into a Score."""
     try:
         text = data["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError, TypeError):
         return Score(value=0, reason="unparseable LLM response", tags=[], ok=False)
-    return _coerce_score(_extract_json(text))
+    return _coerce_score(_extract_json(text), profiles)
 
 
 class GeminiProvider:
@@ -129,12 +186,12 @@ class GeminiProvider:
         self.model = model
         self.client = client
 
-    async def score(self, posting: Posting, profile: Profile) -> Score:
+    async def score(self, posting: Posting, profiles: list[Profile]) -> Score:
         body = {
-            "contents": [{"parts": [{"text": build_prompt(posting, profile)}]}],
+            "contents": [{"parts": [{"text": build_prompt(posting, profiles)}]}],
             "generationConfig": {
                 "responseMimeType": "application/json",
-                "responseSchema": GEMINI_SCHEMA,
+                "responseSchema": _gemini_schema(profiles),
                 "temperature": 0.2,
             },
         }
@@ -150,7 +207,7 @@ class GeminiProvider:
         finally:
             if owns:
                 await client.aclose()
-        return parse_score(data)
+        return parse_score(data, profiles)
 
 
 # --- Claude (Anthropic Messages API, via httpx to match the SDK-free design) ---
@@ -169,18 +226,19 @@ class ClaudeProvider:
         self.model = model
         self.client = client
 
-    async def score(self, posting: Posting, profile: Profile) -> Score:
+    async def score(self, posting: Posting, profiles: list[Profile]) -> Score:
         # Stable instructions + candidate go in `system` (cacheable prefix); the
         # volatile posting goes in the user turn. Caching engages once the prefix
         # exceeds the model minimum; harmless below it.
+        cands = _candidates_block(profiles) if len(profiles) > 1 else _candidate_block(profiles[0])
         system = [{
             "type": "text",
-            "text": f"{INSTRUCTIONS}\n\n{_candidate_block(profile)}",
+            "text": f"{_instructions(profiles)}\n\n{cands}",
             "cache_control": {"type": "ephemeral"},
         }]
         body = {
             "model": self.model,
-            "max_tokens": 300,
+            "max_tokens": 400,
             "system": system,
             "messages": [{"role": "user", "content": _posting_block(posting)}],
         }
@@ -201,7 +259,7 @@ class ClaudeProvider:
         finally:
             if owns:
                 await client.aclose()
-        return _coerce_score(_extract_json(text))
+        return _coerce_score(_extract_json(text), profiles)
 
 
 # --- AWS Bedrock (Claude via the Converse API) ---
@@ -224,8 +282,9 @@ class BedrockProvider:
             self._client = boto3.client("bedrock-runtime", region_name=self.region)
         return self._client
 
-    async def score(self, posting: Posting, profile: Profile) -> Score:
-        system = [{"text": f"{INSTRUCTIONS}\n\n{_candidate_block(profile)}"}]
+    async def score(self, posting: Posting, profiles: list[Profile]) -> Score:
+        cands = _candidates_block(profiles) if len(profiles) > 1 else _candidate_block(profiles[0])
+        system = [{"text": f"{_instructions(profiles)}\n\n{cands}"}]
         messages = [{"role": "user", "content": [{"text": _posting_block(posting)}]}]
 
         def call():
@@ -238,7 +297,7 @@ class BedrockProvider:
             text = resp["output"]["message"]["content"][0]["text"]
         except Exception as e:
             return Score(value=0, reason=f"LLM error: {e!r}"[:200], tags=[], ok=False)
-        return _coerce_score(_extract_json(text))
+        return _coerce_score(_extract_json(text), profiles)
 
 
 # --- Heuristic fallback (deterministic, no network) ---
@@ -290,11 +349,21 @@ def heuristic_score(posting: Posting, profile: Profile) -> Score:
                  tags=["heuristic"], ok=True)
 
 
+def heuristic_multi_score(posting: Posting, profiles: list[Profile]) -> Score:
+    """Per-profile heuristic scores combined into one MultiScore-shaped Score."""
+    profile_scores = {p.name: heuristic_score(posting, p).value for p in profiles}
+    val = max(profile_scores.values()) if profile_scores else 0
+    return Score(value=val, reason="heuristic (LLM unavailable): title + skill match",
+                 tags=["heuristic"], ok=True, profile_scores=profile_scores)
+
+
 class HeuristicProvider:
     """Scores deterministically, no network. Used keyless and as the LLM fallback."""
 
-    async def score(self, posting: Posting, profile: Profile) -> Score:
-        return heuristic_score(posting, profile)
+    async def score(self, posting: Posting, profiles: list[Profile]) -> Score:
+        if len(profiles) <= 1:
+            return heuristic_score(posting, profiles[0])
+        return heuristic_multi_score(posting, profiles)
 
 
 class FallbackProvider:
@@ -306,18 +375,26 @@ class FallbackProvider:
         self.primary = primary
         self.fallback = fallback
 
-    async def score(self, posting: Posting, profile: Profile) -> Score:
-        s = await self.primary.score(posting, profile)
-        return s if s.ok else await self.fallback.score(posting, profile)
+    async def score(self, posting: Posting, profiles: list[Profile]) -> Score:
+        s = await self.primary.score(posting, profiles)
+        return s if s.ok else await self.fallback.score(posting, profiles)
 
 
 class FakeProvider:
     """Constant-score provider for tests and keyless smoke runs."""
 
-    def __init__(self, value: int = 70, reason: str = "fake", tags=None):
+    def __init__(self, value: int = 70, reason: str = "fake", tags=None, profile_values=None):
         self.value = value
         self.reason = reason
         self.tags = tags or []
+        self.profile_values = profile_values  # optional {name: score}
 
-    async def score(self, posting: Posting, profile: Profile) -> Score:
-        return Score(self.value, self.reason, list(self.tags))
+    async def score(self, posting: Posting, profiles: list[Profile]) -> Score:
+        if self.profile_values:
+            ps = {n: self.profile_values.get(n, self.value) for n in (p.name for p in profiles)}
+            return Score(max(ps.values()), self.reason, list(self.tags), profile_scores=ps)
+        if len(profiles) == 1:
+            return Score(self.value, self.reason, list(self.tags),
+                         profile_scores={profiles[0].name: self.value})
+        ps = {p.name: self.value for p in profiles}
+        return Score(self.value, self.reason, list(self.tags), profile_scores=ps)

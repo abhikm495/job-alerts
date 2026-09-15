@@ -1,5 +1,6 @@
 # Scoring profile: the LLM scores every posting against summary + rules below.
 # Tune with: python -m job_radar --preview --limit 10
+name: abhi
 summary: >
   Software engineer with ~2 years of professional experience. Targeting
   full-time software engineering roles (frontend, backend, or full-stack).

@@ -1,0 +1,74 @@
+# Raj's profile — loaded alongside config/profile.yaml for dual scoring (one LLM call).
+name: raj
+summary: >
+  Raj Kumar — Technical Lead / Senior Full Stack Developer with 9+ years in
+  Bangalore, India. Backend-heavy: ASP.NET Core, C#, REST APIs, microservices,
+  SQL Server, PostgreSQL, MariaDB, MongoDB, Elasticsearch. Messaging: Kafka,
+  RabbitMQ. Observability: OpenTelemetry, Grafana. Front-end: React, Blazor.
+  Healthcare IT (HIPAA) domain experience. Targeting senior/lead full-stack or
+  backend roles (.NET / C# / cloud-native). Scoring rules:
+  - STRONG FIT: Senior/Lead/Tech Lead, .NET Core, C#, backend architect,
+    full-stack with React, microservices, healthcare or enterprise SaaS.
+  - GOOD FIT: Platform/backend roles where .NET or API skills transfer.
+  - PENALIZE: intern, junior, new grad, embedded/hardware, mobile-only,
+    domains with no backend/API overlap.
+
+title_include:
+  - software
+  - engineer
+  - developer
+  - full stack
+  - fullstack
+  - backend
+  - .net
+  - dotnet
+  - c#
+  - csharp
+  - asp.net
+  - react
+  - microservice
+  - architect
+  - technical lead
+  - tech lead
+  - lead
+  - senior
+
+title_exclude:
+  - intern
+  - junior
+  - graduate
+  - new grad
+  - phd
+  - embedded
+  - firmware
+  - android
+  - ios
+
+locations_allow: []
+
+locations_block:
+  - united states
+  - usa
+  - u.s.
+  - united kingdom
+  - seattle
+  - san francisco
+  - new york
+  - austin
+  - boston
+  - chicago
+  - denver
+  - los angeles
+  - miami
+  - philadelphia
+  - dallas
+  - atlanta
+  - manchester
+  - birmingham
+  - edinburgh
+
+freshness_days: 21
+ping_threshold: 70
+digest_threshold: 55
+high_score: 80
+high_fresh_hours: 2

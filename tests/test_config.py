@@ -1,5 +1,5 @@
 import os
-from job_radar.config import load_profile, load_companies, load_settings
+from job_radar.config import load_profile, load_profiles, load_companies, load_settings
 
 
 def test_load_profile_lowercases_keywords(tmp_path):
@@ -46,6 +46,25 @@ def test_load_settings_dry_run_when_no_webhook(monkeypatch):
     assert s.dry_run is True
     assert s.llm_provider == "gemini"   # default provider
     assert s.llm_model == ""            # "" => provider default, resolved in build_provider
+
+
+def test_load_profile_reads_name(tmp_path):
+    f = tmp_path / "profile-raj.yaml"
+    f.write_text("name: raj\nsummary: hi\ntitle_include: []\ntitle_exclude: []\n"
+                 "locations_allow: []\nlocations_block: []\nfreshness_days: 10\n")
+    pr = load_profile(str(f))
+    assert pr.name == "raj"
+
+
+def test_load_profiles_from_env(tmp_path, monkeypatch):
+    a = tmp_path / "a.yaml"
+    b = tmp_path / "b.yaml"
+    for path, name in ((a, "abhi"), (b, "raj")):
+        path.write_text(f"name: {name}\nsummary: hi\ntitle_include: []\ntitle_exclude: []\n"
+                        "locations_allow: []\nlocations_block: []\nfreshness_days: 10\n")
+    monkeypatch.setenv("PROFILE_PATHS", f"{a},{b}")
+    profiles = load_profiles(str(a))
+    assert [p.name for p in profiles] == ["abhi", "raj"]
 
 
 def test_load_settings_live_when_regional_webhook_present(monkeypatch):

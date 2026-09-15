@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 
 from job_radar.models import Posting, Score, Company, Profile, Urgency
-from job_radar.urgency import classify
+from job_radar.urgency import classify, classify_for_profiles
 
 NOW = datetime(2026, 6, 1, 12, tzinfo=timezone.utc)
 PROFILE = Profile(summary="s", title_include=[], title_exclude=[], locations_allow=[],
@@ -38,3 +38,17 @@ def test_medium_when_relevant_not_fresh():
 def test_low_and_drop():
     assert classify(_p(), Score(55, "r"), TARGET, PROFILE, NOW) == Urgency.LOW
     assert classify(_p(), Score(40, "r"), TARGET, PROFILE, NOW) is None
+
+
+def test_classify_for_profiles_uses_per_profile_thresholds():
+    abhi = Profile(name="abhi", summary="s", title_include=[], title_exclude=[],
+                   locations_allow=[], locations_block=[], freshness_days=21,
+                   ping_threshold=70, digest_threshold=55, high_score=80, high_fresh_hours=2)
+    raj = Profile(name="raj", summary="s", title_include=[], title_exclude=[],
+                  locations_allow=[], locations_block=[], freshness_days=21,
+                  ping_threshold=70, digest_threshold=55, high_score=80, high_fresh_hours=2)
+    score = Score(85, "r", profile_scores={"abhi": 55, "raj": 85})
+    # abhi below ping bar, raj fresh + high -> HIGH for raj
+    level = classify_for_profiles(_p(NOW), score, TARGET, [abhi, raj],
+                                  {"abhi", "raj"}, NOW)
+    assert level == Urgency.HIGH

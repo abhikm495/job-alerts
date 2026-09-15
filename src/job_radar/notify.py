@@ -19,6 +19,14 @@ def _snippet(text: str, n: int = 320) -> str:
     return (t[: n - 1] + "…") if len(t) > n else t
 
 
+def _fit_label(score: Score) -> str:
+    """Discord field title: per-profile scores when available, else a single fit score."""
+    if score.profile_scores:
+        parts = [f"{name.capitalize()} ({val})" for name, val in sorted(score.profile_scores.items())]
+        return " | ".join(parts)
+    return f"{score.value}/100"
+
+
 def _age(posting: Posting, now: datetime) -> str:
     if posting.posted_at is None:
         return "unknown"
@@ -39,7 +47,7 @@ def build_embed(posting: Posting, score: Score, urgency: Urgency,
         {"name": "Company", "value": f"{posting.company} ({posting.ats})", "inline": True},
         {"name": "Location", "value": loc[:240], "inline": True},
         {"name": "Posted", "value": _age(posting, now), "inline": True},
-        {"name": f"Fit {score.value}/100 — why", "value": (score.reason or "n/a")[:600], "inline": False},
+        {"name": f"Fit {_fit_label(score)} — why", "value": (score.reason or "n/a")[:600], "inline": False},
     ]
     snip = _snippet(posting.description)
     if snip:

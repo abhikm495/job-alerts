@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 from .config import any_discord_webhook
 from .dedup import SeenStore
-from .filters import passes_rules, rule_rejection
+from .filters import eligible_profiles, passes_any_rules, passes_rules, rule_rejection
 from .models import Score, Urgency
 from .notify import ConsoleNotifier, RegionalDiscordNotifier
 from .regions import classify_region
@@ -17,7 +17,7 @@ from .scorer import (BedrockProvider, ClaudeProvider, FallbackProvider, GeminiPr
                      HeuristicProvider, heuristic_score)
 from .sources import enrich_postings, fetch_all
 from .tracker import bad_term_text
-from .urgency import classify
+from .urgency import classify, classify_for_profiles
 
 SCORE_CONCURRENCY = 6
 PREVIEW_CAP = 80    # max survivors to LLM-score in --preview (use --company/--limit to narrow)
@@ -34,11 +34,15 @@ def _read_score_cap() -> int:
     return int(os.environ.get("SCORE_CAP", "0"))
 
 
-def _apply_score_cap(survivors, profile, score_cap: int):
+def _best_heuristic(posting, profiles):
+    return max(heuristic_score(posting, p).value for p in profiles)
+
+
+def _apply_score_cap(survivors, profiles, score_cap: int):
     """Return (kept, deferred_uids). score_cap <= 0 means score everything."""
     if score_cap <= 0 or len(survivors) <= score_cap:
         return survivors, set()
-    ranked = sorted(survivors, key=lambda p: heuristic_score(p, profile).value, reverse=True)
+    ranked = sorted(survivors, key=lambda p: _best_heuristic(p, profiles), reverse=True)
     kept = ranked[:score_cap]
     deferred = {p.uid for p in ranked[score_cap:]}
     return kept, deferred
@@ -85,7 +89,7 @@ def _dedup_by_uid(postings):
     return out
 
 
-async def _score_all(provider, survivors, profile):
+async def _score_all(provider, survivors, profiles):
     """Score survivors concurrently (bounded), preserving input order. A failure on
     one posting yields a zero Score rather than aborting the whole run."""
     sem = asyncio.Semaphore(SCORE_CONCURRENCY)
@@ -93,11 +97,17 @@ async def _score_all(provider, survivors, profile):
     async def one(p):
         async with sem:
             try:
-                return p, await provider.score(p, profile)
+                return p, await provider.score(p, profiles)
             except Exception as e:
                 return p, Score(value=0, reason=f"score error: {e!r}"[:200], tags=[], ok=False)
 
     return await asyncio.gather(*[one(p) for p in survivors])
+
+
+def _classify(posting, score, company, profiles, eligible_names, now):
+    if len(profiles) <= 1:
+        return classify(posting, score, company, profiles[0], now)
+    return classify_for_profiles(posting, score, company, profiles, eligible_names, now)
 
 
 def build_provider(settings):
@@ -148,19 +158,20 @@ async def preview(config, *, provider=None, now=None):
     postings, score (capped), and print ranked by fit. Read-only: ignores and never
     writes the seen-set. For tuning profile.yaml before going live."""
     now = now or datetime.now(timezone.utc)
-    profile, companies, settings = config.profile, config.companies, config.settings
+    profiles, companies, settings = config.profiles, config.companies, config.settings
     provider = provider or build_provider(settings)
     cmap = _company_map(companies)
 
     postings, errors, board_status = await fetch_all(companies)
-    survivors = [p for p in postings if passes_rules(p, profile, now)]
+    survivors = [p for p in postings if passes_any_rules(p, profiles, now)]
     to_score = survivors[:PREVIEW_CAP]
     to_score = await enrich_postings(to_score, cmap)
-    scored = list(await _score_all(provider, to_score, profile))
+    scored = list(await _score_all(provider, to_score, profiles))
     scored.sort(key=lambda ps: ps[1].value, reverse=True)
 
     for p, score in scored:
-        level = classify(p, score, cmap.get((p.ats, p.company)), profile, now)
+        eligible = {pr.name for pr in eligible_profiles(p, profiles, now)}
+        level = _classify(p, score, cmap.get((p.ats, p.company)), profiles, eligible, now)
         tag = level.value.upper() if level else "drop"
         print(f"[{tag:6}] {score.value:3}/100  {p.title}  @ {p.company} ({p.location})  :: {score.reason}")
 
@@ -180,10 +191,10 @@ async def backfill(config, *, provider=None, sheet_sink=None, now=None,
     stays focused on strong matches instead of every rules-survivor. Does NOT touch the
     seen-set and does NOT ping Discord. SheetSink dedups, so re-running is safe."""
     now = now or datetime.now(timezone.utc)
-    profile, companies, settings = config.profile, config.companies, config.settings
+    profiles, companies, settings = config.profiles, config.companies, config.settings
     # Reach further back than the live cron: still-open roles posted weeks ago are exactly
     # what a backfill should catch (the cron only ever saw the last freshness_days window).
-    profile = replace(profile, freshness_days=max(profile.freshness_days, max_age_days))
+    profiles = [replace(p, freshness_days=max(p.freshness_days, max_age_days)) for p in profiles]
     provider = provider or build_provider(settings)
     if sheet_sink is None:
         sheet_sink = build_sheet_sink(settings)
@@ -194,7 +205,7 @@ async def backfill(config, *, provider=None, sheet_sink=None, now=None,
 
     postings, errors, board_status = await fetch_all(companies)
     postings = _dedup_by_uid(postings)
-    survivors = [p for p in postings if passes_rules(p, profile, now)]
+    survivors = [p for p in postings if passes_any_rules(p, profiles, now)]
     # Skip roles already in the Sheet BEFORE scoring, so a re-run only spends LLM calls on
     # genuinely-new postings (e.g. after widening the filter to US roles).
     survivors = [p for p in survivors if not sheet_sink.is_tracked(p.uid)]
@@ -202,9 +213,9 @@ async def backfill(config, *, provider=None, sheet_sink=None, now=None,
     # seniority/domain-mismatch) and LLM-score the top BACKFILL_CAP. Across a big, loose
     # pool (e.g. US roles) this beats freshest-first, which surfaces marginal sales/support
     # roles that pass the title rules but aren't a fit.
-    survivors.sort(key=lambda p: heuristic_score(p, profile).value, reverse=True)
+    survivors.sort(key=lambda p: _best_heuristic(p, profiles), reverse=True)
     to_score = await enrich_postings(survivors[:BACKFILL_CAP], cmap)
-    scored = await _score_all(provider, to_score, profile)
+    scored = await _score_all(provider, to_score, profiles)
 
     for p, score in scored:
         # Inventory gate: a real score (not an error) at or above min_fit. Unlike the cron
@@ -234,7 +245,8 @@ async def backfill(config, *, provider=None, sheet_sink=None, now=None,
 async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None, force_prime=False):
     t0 = time.monotonic()
     now = now or datetime.now(timezone.utc)
-    profile, companies, settings = config.profile, config.companies, config.settings
+    profiles, companies, settings = config.profiles, config.companies, config.settings
+    profile = profiles[0]
     provider = provider or build_provider(settings)
     notifier = notifier or build_notifier(settings)
     if sheet_sink is None:
@@ -303,21 +315,24 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
         new = kept
 
     survivors = []
+    eligible_by_uid: dict[str, set[str]] = {}
     for p in new:
-        reason = rule_rejection(p, profile, now)
-        if reason:
+        eligible = eligible_profiles(p, profiles, now)
+        if not eligible:
+            reason = rule_rejection(p, profiles[0], now)
             report.filter_rejects[reason] = report.filter_rejects.get(reason, 0) + 1
         else:
             survivors.append(p)
+            eligible_by_uid[p.uid] = {pr.name for pr in eligible}
     # Bound the expensive tail (enrich + LLM scoring) so a backlog spike — fall-wave
     # volume, newly added boards, or state loss after a killed run — can never blow the
     # run past its cron window. Survivors beyond the cap are DEFERRED: kept out of this
     # run's seen-sweep so they come back as 'new' next run and get scored then, best
     # heuristic fit first. Deferrals are surfaced in stats, never silent.
     score_cap = _read_score_cap()
-    survivors, deferred_uids = _apply_score_cap(survivors, profile, score_cap)
+    survivors, deferred_uids = _apply_score_cap(survivors, profiles, score_cap)
     survivors = await enrich_postings(survivors, cmap)  # fill descriptions for the few that need it
-    scored = await _score_all(provider, survivors, profile)
+    scored = await _score_all(provider, survivors, profiles)
     for p, score in scored:
         report.scored_jobs.append(ScoredJobSummary(
             title=p.title, company=p.company, ats=p.ats,
@@ -341,7 +356,8 @@ async def run(config, *, provider=None, notifier=None, sheet_sink=None, now=None
         # sunk, as the safety net for a mis-parsed term.)
         if bad_term_text(score.term):
             continue
-        level = classify(p, score, company, profile, now)
+        eligible_names = eligible_by_uid.get(p.uid, {pr.name for pr in profiles})
+        level = _classify(p, score, company, profiles, eligible_names, now)
         if level is None:
             continue
         if level == Urgency.LOW:

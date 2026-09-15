@@ -26,3 +26,35 @@ def classify(posting: Posting, score: Score, company: Company | None,
         return Urgency.LOW
 
     return None
+
+
+_URGENCY_RANK = {Urgency.HIGH: 3, Urgency.MEDIUM: 2, Urgency.LOW: 1}
+
+
+def _score_for_profile(score: Score, profile: Profile) -> Score:
+    if score.profile_scores and profile.name in score.profile_scores:
+        val = score.profile_scores[profile.name]
+    elif len(score.profile_scores) == 0:
+        val = score.value
+    else:
+        val = 0
+    return Score(value=val, reason=score.reason, tags=score.tags, ok=score.ok,
+                 resume=score.resume, term=score.term, profile_scores=score.profile_scores)
+
+
+def classify_for_profiles(posting: Posting, score: Score, company: Company | None,
+                          profiles: list[Profile], eligible_names: set[str],
+                          now: datetime | None = None) -> Urgency | None:
+    """Pick the highest urgency level across profiles that passed rules. Each profile uses
+    its own thresholds on its individual score from a multi-profile LLM response."""
+    now = now or datetime.now(timezone.utc)
+    best: Urgency | None = None
+    for profile in profiles:
+        if profile.name not in eligible_names:
+            continue
+        level = classify(posting, _score_for_profile(score, profile), company, profile, now)
+        if level is None:
+            continue
+        if best is None or _URGENCY_RANK[level] > _URGENCY_RANK[best]:
+            best = level
+    return best

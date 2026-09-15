@@ -35,12 +35,13 @@ class Urgency(str, Enum):
 
 @dataclass(frozen=True)
 class Score:
-    value: int                    # 0-100
+    value: int                    # 0-100; max across profile_scores when multi-profile
     reason: str
     tags: list[str] = field(default_factory=list, compare=False)
     ok: bool = field(default=True, compare=False)  # False => scoring errored (value is not a real fit)
     resume: str = field(default="", compare=False)  # which resume to use: "swe" | "ai" | ""
     term: str = field(default="", compare=False)    # work-term timing as stated in the posting
+    profile_scores: dict[str, int] = field(default_factory=dict, compare=False)  # name -> 0-100
 
 
 @dataclass(frozen=True)
@@ -55,3 +56,4 @@ class Profile:
     digest_threshold: int = 50
     high_score: int = 80
     high_fresh_hours: int = 2
+    name: str = "default"         # short id for multi-profile scoring + Discord labels

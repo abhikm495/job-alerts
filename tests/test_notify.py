@@ -24,6 +24,13 @@ def test_build_embed_shape_and_color():
     assert any("Fit 90" in n for n in names)
 
 
+def test_build_embed_shows_multi_profile_scores():
+    score = Score(85, "raj fit", profile_scores={"abhi": 60, "raj": 85})
+    e = build_embed(_p(), score, Urgency.MEDIUM, COMPANY, NOW)
+    fit_field = [f["name"] for f in e["fields"] if f["name"].startswith("Fit ")][0]
+    assert "Abhi (60)" in fit_field and "Raj (85)" in fit_field
+
+
 def test_build_embed_includes_description_snippet_and_visa_flag():
     p = Posting(uid="x:1", ats="greenhouse", company="acme", title="SWE Intern",
                 location="San Francisco, CA",

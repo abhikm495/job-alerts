@@ -14,7 +14,7 @@ POSTING = Posting(uid="x:1", ats="ashby", company="cohere", title="ML Intern",
 
 
 def test_build_prompt_includes_profile_and_posting():
-    prompt = build_prompt(POSTING, PROFILE)
+    prompt = build_prompt(POSTING, [PROFILE])
     assert "CS student" in prompt
     assert "ML Intern" in prompt
     assert "cohere" in prompt
@@ -35,7 +35,7 @@ async def test_gemini_http_error_marks_score_not_ok():
         return httpx.Response(429, json={"error": {"message": "quota exceeded"}})
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-        s = await GeminiProvider("KEY", client=client).score(POSTING, PROFILE)
+        s = await GeminiProvider("KEY", client=client).score(POSTING, [PROFILE])
     assert s.value == 0 and s.ok is False  # a 429 is an error, not a real zero fit
 
 
@@ -45,12 +45,12 @@ async def test_successful_score_is_ok():
             {"text": '{"score": 72, "reason": "fit", "tags": []}'}]}}]})
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-        s = await GeminiProvider("KEY", client=client).score(POSTING, PROFILE)
+        s = await GeminiProvider("KEY", client=client).score(POSTING, [PROFILE])
     assert s.value == 72 and s.ok is True
 
 
 async def test_fake_provider():
-    s = await FakeProvider(value=88, reason="r").score(POSTING, PROFILE)
+    s = await FakeProvider(value=88, reason="r").score(POSTING, [PROFILE])
     assert s.value == 88
 
 
@@ -64,7 +64,7 @@ async def test_gemini_provider_posts_and_parses():
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         provider = GeminiProvider("KEY", model="gemini-2.0-flash", client=client)
-        s = await provider.score(POSTING, PROFILE)
+        s = await provider.score(POSTING, [PROFILE])
 
     assert "generativelanguage.googleapis.com" in captured["url"]
     assert "key=KEY" in captured["url"]
@@ -122,11 +122,11 @@ async def test_fallback_uses_primary_when_ok_else_heuristic():
             return Score(0, "LLM error: 429", ok=False)
 
     good = await FallbackProvider(OkPrimary(), HeuristicProvider()).score(
-        _post("Software Engineer Intern"), PROFILE)
+        _post("Software Engineer Intern"), [PROFILE])
     assert good.value == 73 and "heuristic" not in good.tags  # primary score kept
 
     fell = await FallbackProvider(FailPrimary(), HeuristicProvider()).score(
-        _post("Software Engineer Intern", "Python React"), PROFILE)
+        _post("Software Engineer Intern", "Python React"), [PROFILE])
     assert fell.ok is True and "heuristic" in fell.tags  # degraded to heuristic, not zero
 
 
@@ -149,10 +149,10 @@ async def test_bedrock_provider_parses_converse_response():
                 {"text": '{"score": 77, "reason": "solid match", "tags": ["ai"]}'}]}}}
 
     fb = FakeBedrock()
-    s = await BedrockProvider("model-x", client=fb).score(POSTING, PROFILE)
+    s = await BedrockProvider("model-x", client=fb).score(POSTING, [PROFILE])
     assert s.value == 77 and "solid match" in s.reason and s.ok is True
     assert fb.kw["modelId"] == "model-x"          # the configured model is used
-    assert fb.kw["system"][0]["text"].startswith("You screen")  # instructions sent as system
+    assert "screen job postings" in fb.kw["system"][0]["text"]  # instructions sent as system
 
 
 async def test_bedrock_error_marks_not_ok():
@@ -160,8 +160,50 @@ async def test_bedrock_error_marks_not_ok():
         def converse(self, **kw):
             raise RuntimeError("AccessDeniedException")
 
-    s = await BedrockProvider("m", client=BadBedrock()).score(POSTING, PROFILE)
+    s = await BedrockProvider("m", client=BadBedrock()).score(POSTING, [PROFILE])
     assert s.value == 0 and s.ok is False           # falls through to the heuristic in build_provider
+
+
+def test_coerce_multi_score_parses_per_profile():
+    from job_radar.scorer import _coerce_score
+    abhi = Profile(name="abhi", summary="s", title_include=[], title_exclude=[],
+                   locations_allow=[], locations_block=[], freshness_days=21)
+    raj = Profile(name="raj", summary="s", title_include=[], title_exclude=[],
+                  locations_allow=[], locations_block=[], freshness_days=21)
+    s = _coerce_score({"scores": {"abhi": 74, "raj": 81}, "reason": "raj fit",
+                       "tags": ["dotnet"], "term": "full-time"}, [abhi, raj])
+    assert s.value == 81
+    assert s.profile_scores == {"abhi": 74, "raj": 81}
+    assert s.ok is True
+
+
+def test_build_prompt_multi_lists_both_candidates():
+    abhi = Profile(name="abhi", summary="React dev", title_include=[], title_exclude=[],
+                   locations_allow=[], locations_block=[], freshness_days=21)
+    raj = Profile(name="raj", summary=".NET lead", title_include=[], title_exclude=[],
+                  locations_allow=[], locations_block=[], freshness_days=21)
+    prompt = build_prompt(POSTING, [abhi, raj])
+    assert "CANDIDATE (abhi)" in prompt and "CANDIDATE (raj)" in prompt
+    assert "Candidate ids: abhi, raj" in prompt
+
+
+async def test_gemini_multi_score_single_call():
+    captured = {}
+
+    def handler(request):
+        captured["body"] = request.content.decode()
+        return httpx.Response(200, json={"candidates": [{"content": {"parts": [
+            {"text": '{"scores": {"abhi": 60, "raj": 85}, "reason": "raj", "tags": [], "term": "full-time"}'}]}}]})
+
+    abhi = Profile(name="abhi", summary="s", title_include=[], title_exclude=[],
+                   locations_allow=[], locations_block=[], freshness_days=21)
+    raj = Profile(name="raj", summary="s", title_include=[], title_exclude=[],
+                  locations_allow=[], locations_block=[], freshness_days=21)
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        s = await GeminiProvider("KEY", client=client).score(POSTING, [abhi, raj])
+    assert s.profile_scores == {"abhi": 60, "raj": 85}
+    assert s.value == 85
+    assert "abhi" in captured["body"] and "raj" in captured["body"]
 
 
 async def test_claude_provider_posts_and_parses():
@@ -176,7 +218,7 @@ async def test_claude_provider_posts_and_parses():
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         provider = ClaudeProvider("KEY", model="claude-haiku-4-5", client=client)
-        s = await provider.score(POSTING, PROFILE)
+        s = await provider.score(POSTING, [PROFILE])
 
     assert "api.anthropic.com/v1/messages" in captured["url"]
     assert captured["api_key"] == "KEY"
