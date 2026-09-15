@@ -1,0 +1,30 @@
+{
+  "numberRecords": 2,
+  "jvs": [
+    {
+      "id": "MTAwMDAtMTIwNzg5MDc5Ni1TIDE",
+      "title": "Software Engineer",
+      "description": "<p>Develop backend services in Java.</p>",
+      "creationDate": 1739403609768,
+      "lastModificationDate": 1768605849756,
+      "euresFlag": true,
+      "locationMap": {"DE": ["DE12B"]},
+      "employer": {"name": "Tech GmbH", "sectorCodes": []},
+      "positionScheduleCodes": ["fulltime"],
+      "positionOfferingCode": "directhire"
+    },
+    {
+      "id": "MTAwMDEtMTAwMzA5MTgyMC1TIDE",
+      "title": "Développeur Full Stack",
+      "description": "React and Node.js role in Paris.",
+      "creationDate": 1739403609768,
+      "lastModificationDate": 1768605849756,
+      "euresFlag": true,
+      "locationMap": {"FR": ["FR101"]},
+      "employer": {"name": "Acme SAS", "sectorCodes": []},
+      "positionScheduleCodes": ["fulltime"],
+      "positionOfferingCode": "directhire"
+    }
+  ],
+  "facets": {}
+}

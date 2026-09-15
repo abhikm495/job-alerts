@@ -43,25 +43,6 @@ locations_allow: []
 # Block obvious US/UK on-site roles (e.g. from Arbeitnow's global feed).
 # Token-aware matching in filters.py — use countries/phrases, not ambiguous city names like "london".
 locations_block:
-  - united states
-  - usa
-  - u.s.
-  - united kingdom
-  - seattle
-  - san francisco
-  - new york
-  - austin
-  - boston
-  - chicago
-  - denver
-  - los angeles
-  - miami
-  - philadelphia
-  - dallas
-  - atlanta
-  - manchester
-  - birmingham
-  - edinburgh
 
 freshness_days: 21
 ping_threshold: 70 # discord pings only above this LLM score

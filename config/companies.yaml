@@ -2015,3 +2015,15 @@ companies:
 - slug: remotive
   ats: remotive
   tier: target
+- slug: eures-de
+  ats: eures
+  tier: target
+  region: de
+- slug: eures-fr
+  ats: eures
+  tier: target
+  region: fr
+- slug: eures-nl
+  ats: eures
+  tier: target
+  region: nl

@@ -47,25 +47,6 @@ title_exclude:
 locations_allow: []
 
 locations_block:
-  - united states
-  - usa
-  - u.s.
-  - united kingdom
-  - seattle
-  - san francisco
-  - new york
-  - austin
-  - boston
-  - chicago
-  - denver
-  - los angeles
-  - miami
-  - philadelphia
-  - dallas
-  - atlanta
-  - manchester
-  - birmingham
-  - edinburgh
 
 freshness_days: 21
 ping_threshold: 70

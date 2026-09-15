@@ -99,6 +99,9 @@ jobs:
           JOBSBASE_PAGE_SIZE: "100"
           HIMALAYAS_MAX_PAGES: "5"
           REMOTIVE_LIMIT: "100"
+          EURES_MAX_PAGES: "5"
+          EURES_RESULTS_PER_PAGE: "50"
+          EURES_PUBLICATION_PERIOD: "LAST_MONTH"
         run: |
           set -o pipefail
           python -m job_radar | tee run.log
