@@ -48,7 +48,7 @@ locations_allow: []
 
 locations_block:
 
-freshness_days: 21
+freshness_days: 7
 ping_threshold: 70
 digest_threshold: 55
 high_score: 80

@@ -37,7 +37,7 @@ def _search_params(company: Company) -> dict:
     return {
         "was": (company.token or os.environ.get("BA_WAS", "software")).strip(),
         "wo": os.environ.get("BA_WO", "Deutschland").strip(),
-        "veroeffentlichtseit": _env_int("BA_VEROEFFENTLICHTSEIT", 14),
+        "veroeffentlichtseit": _env_int("BA_VEROEFFENTLICHTSEIT", 7),
         "angebotsart": 1,
         "size": PAGE_SIZE,
     }

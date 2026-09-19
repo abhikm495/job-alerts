@@ -33,7 +33,7 @@ def test_eures_search_body():
     assert body["euresFlagCodes"] == ["WITH"]
     assert body["positionScheduleCodes"] == ["fulltime"]
     assert body["keywords"] == []
-    assert body["publicationPeriod"] == "LAST_MONTH"
+    assert body["publicationPeriod"] == "LAST_WEEK"
 
 
 async def test_eures_fetch_paginates(monkeypatch):

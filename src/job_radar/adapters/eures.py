@@ -11,7 +11,7 @@ SEARCH_URL = "https://europa.eu/eures/api/jv-searchengine/public/jv-search/searc
 DETAIL_URL = "https://europa.eu/eures/portal/jv-se/jv-details/{id}?lang=en"
 MAX_PAGES_DEFAULT = 5
 RESULTS_PER_PAGE_DEFAULT = 50
-PUBLICATION_PERIOD_DEFAULT = "LAST_MONTH"
+PUBLICATION_PERIOD_DEFAULT = "LAST_WEEK"
 
 
 def _env_int(name: str, default: int) -> int:

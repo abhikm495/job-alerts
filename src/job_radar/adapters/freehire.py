@@ -11,7 +11,7 @@ from .base import get_json, strip_html, to_dt
 AGENT_SEARCH_URL = "https://freehire.me/api/v1/agent/jobs/search"
 MAX_PAGES_DEFAULT = 5
 PAGE_SIZE_DEFAULT = 100
-OPEN_WITHIN_DAYS_DEFAULT = 30
+OPEN_WITHIN_DAYS_DEFAULT = 7
 # Freehire ORs comma-separated categories — cover SWE roles both profiles target.
 DEFAULT_CATEGORIES = (
     "software_engineering,backend,frontend,fullstack,architecture,solutions_engineering"

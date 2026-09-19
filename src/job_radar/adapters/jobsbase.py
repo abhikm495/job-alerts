@@ -13,7 +13,7 @@ from .base import get_json, strip_html, to_dt
 SEARCH_URL = "https://jobsbase.io/api/v1/jobs"
 MAX_PAGES_DEFAULT = 5
 PAGE_SIZE_DEFAULT = 100
-POSTED_WITHIN_DEFAULT = "30d"
+POSTED_WITHIN_DEFAULT = "7d"
 
 
 def _env_int(name: str, default: int) -> int:

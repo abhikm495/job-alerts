@@ -39,7 +39,7 @@ locations_block:
   - emea
   - apac
 
-freshness_days: 21
+freshness_days: 7
 ping_threshold: 78     # discord pings only above this LLM score
 digest_threshold: 78
 high_score: 82         # "urgent" styling in the embed

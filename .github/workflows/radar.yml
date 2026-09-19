@@ -79,7 +79,7 @@ jobs:
           GOOGLE_CREDENTIALS_PATH: google-creds.json
           SCORE_CAP: "0"
           BA_MAX_PAGES: "20"
-          BA_VEROEFFENTLICHTSEIT: "14"
+          BA_VEROEFFENTLICHTSEIT: "7"
           ARBEITNOW_MAX_PAGES: "10"
           ARBEITNOW_GERMANY_ONLY: "false"
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
@@ -89,19 +89,19 @@ jobs:
           ADZUNA_APP_KEY_4: ${{ secrets.ADZUNA_APP_KEY_4 }}
           ADZUNA_APP_KEY_5: ${{ secrets.ADZUNA_APP_KEY_5 }}
           ADZUNA_MAX_PAGES: "5"
-          ADZUNA_MAX_DAYS_OLD: "21"
+          ADZUNA_MAX_DAYS_OLD: "7"
           FREEHIRE_MAX_PAGES: "5"
-          FREEHIRE_OPEN_WITHIN_DAYS: "30"
+          FREEHIRE_OPEN_WITHIN_DAYS: "7"
           FREEHIRE_PAGE_SIZE: "100"
           FREEHIRE_CATEGORIES: "software_engineering,backend,frontend,fullstack,architecture,solutions_engineering"
           JOBSBASE_MAX_PAGES: "5"
-          JOBSBASE_POSTED_WITHIN: "30d"
+          JOBSBASE_POSTED_WITHIN: "7d"
           JOBSBASE_PAGE_SIZE: "100"
           HIMALAYAS_MAX_PAGES: "5"
           REMOTIVE_LIMIT: "100"
           EURES_MAX_PAGES: "5"
           EURES_RESULTS_PER_PAGE: "50"
-          EURES_PUBLICATION_PERIOD: "LAST_MONTH"
+          EURES_PUBLICATION_PERIOD: "LAST_WEEK"
         run: |
           set -o pipefail
           python -m job_radar | tee run.log

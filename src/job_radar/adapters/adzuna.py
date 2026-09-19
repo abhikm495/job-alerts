@@ -14,7 +14,7 @@ from .base import BACKOFF_BASE, BACKOFF_MAX, TIMEOUT, strip_html, to_dt
 SEARCH_URL = "https://api.adzuna.com/v1/api/jobs/{country}/search/{page}"
 PAGE_SIZE = 50
 MAX_PAGES_DEFAULT = 5
-MAX_DAYS_OLD_DEFAULT = 21
+MAX_DAYS_OLD_DEFAULT = 7
 WHAT_DEFAULT = "software"
 MAX_KEY_SLOTS = 5
 

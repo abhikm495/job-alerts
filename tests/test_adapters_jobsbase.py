@@ -28,7 +28,7 @@ def test_jobsbase_search_params_visa():
     params = jobsbase._search_params(Company(slug="jobsbase-visa", ats="jobsbase"))
     assert params["visa_sponsorship"] == "true"
     assert params["type"] == "full-time"
-    assert params["posted_within"] == "30d"
+    assert params["posted_within"] == "7d"
     assert "country" not in params
 
 
